@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f8f9f9">
   <title>HHHUUUBBB</title>
-  <meta name="description" content="HHHUUUBBB — a compact hub for VAMRSS web applications.">
+  <meta name="description" content="HHHUUUBBB — VAMRSS web application hub.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <style>
     :root {
@@ -13,8 +13,8 @@
       --ink: #111714;
       --sub: #68736f;
       --muted: #9aa5a1;
-      --line: rgba(17, 23, 20, 0.14);
-      --soft: rgba(17, 23, 20, 0.045);
+      --line: rgba(17, 23, 20, .15);
+      --hover: rgba(17, 23, 20, .035);
       --invert-bg: #111714;
       --invert-ink: #f8f9f9;
       --font-main: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
@@ -25,8 +25,8 @@
       --ink: #edf1ef;
       --sub: #a4aeaa;
       --muted: #707b77;
-      --line: rgba(237, 241, 239, 0.14);
-      --soft: rgba(237, 241, 239, 0.05);
+      --line: rgba(237, 241, 239, .15);
+      --hover: rgba(237, 241, 239, .04);
       --invert-bg: #edf1ef;
       --invert-ink: #101312;
     }
@@ -44,10 +44,10 @@
       color: var(--ink);
       background: var(--bg);
       font-family: var(--font-main);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 300;
-      line-height: 2;
-      letter-spacing: 0.01em;
+      line-height: 1.5;
+      letter-spacing: .01em;
     }
 
     button,
@@ -65,270 +65,202 @@
 
     .app {
       width: 100%;
-      max-width: 520px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: calc(max(18px, env(safe-area-inset-top)) + 24px) 20px max(38px, env(safe-area-inset-bottom));
+      padding: calc(max(14px, env(safe-area-inset-top)) + 14px) 18px max(24px, env(safe-area-inset-bottom));
     }
 
     .topbar {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) max-content;
-      align-items: start;
-      column-gap: 18px;
-      margin-bottom: 54px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
     .brand {
       margin: 0;
-      font-size: 12px;
-      font-weight: 300;
+      font-size: 11px;
+      font-weight: 400;
       line-height: 1;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      letter-spacing: .16em;
     }
 
-    .nav {
+    .controls {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: flex-end;
-      gap: 12px;
-      line-height: 1;
-      white-space: nowrap;
+      gap: 10px;
     }
 
-    .text-button,
-    .nav-link {
+    .text-btn {
       appearance: none;
       border: 0;
       background: transparent;
-      margin: 0;
-      padding: 0 2px;
+      padding: 0;
       color: var(--sub);
-      font-size: 12px;
-      font-weight: 300;
+      font-size: 10px;
       line-height: 1;
-      letter-spacing: 0.09em;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      text-decoration: none;
       cursor: pointer;
     }
 
-    .text-button:hover,
-    .nav-link:hover,
-    .text-button:focus-visible,
-    .nav-link:focus-visible {
+    .text-btn:hover,
+    .text-btn:focus-visible {
       color: var(--ink);
-    }
-
-    .hero {
-      margin-bottom: 48px;
-    }
-
-    .eyebrow {
-      margin: 0 0 12px;
-      color: var(--muted);
-      font-size: 11px;
-      letter-spacing: 0.11em;
-      text-transform: uppercase;
-    }
-
-    .hero-title {
-      margin: 0;
-      max-width: 440px;
-      font-size: clamp(28px, 8vw, 46px);
-      font-weight: 300;
-      line-height: 1.08;
-      letter-spacing: -0.04em;
-    }
-
-    .hero-copy {
-      max-width: 420px;
-      margin: 22px 0 0;
-      color: var(--sub);
-      line-height: 1.85;
-    }
-
-    .tools {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) max-content;
-      gap: 12px;
-      align-items: end;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 14px;
-    }
-
-    .search-label,
-    .count {
-      color: var(--muted);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .search-wrap {
-      min-width: 0;
-    }
-
-    .search-label {
-      display: block;
-      margin-bottom: 4px;
     }
 
     .search {
-      display: block;
-      width: 100%;
-      min-height: 30px;
+      width: 118px;
+      height: 22px;
       border: 0;
+      border-bottom: 1px solid var(--line);
       border-radius: 0;
       outline: none;
       background: transparent;
-      padding: 0;
+      padding: 0 2px;
       color: var(--ink);
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 300;
-      line-height: 1.5;
     }
 
     .search::placeholder { color: var(--muted); }
 
-    .app-list {
-      border-top: 1px solid transparent;
-    }
-
-    .app-card {
-      display: grid;
-      grid-template-columns: 34px minmax(0, 1fr) max-content;
-      gap: 14px;
-      align-items: start;
-      padding: 18px 0 19px;
-      border-bottom: 1px solid var(--line);
-      text-decoration: none;
-      transition: padding-left 160ms ease, background-color 160ms ease;
-    }
-
-    .app-card:hover,
-    .app-card:focus-visible {
-      padding-left: 8px;
-      outline: none;
-      background: var(--soft);
-    }
-
-    .app-index {
-      color: var(--muted);
-      font-size: 10px;
-      letter-spacing: 0.08em;
-    }
-
-    .app-title-row {
+    .section-line {
       display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-
-    .app-title {
-      margin: 0;
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 1.6;
-      letter-spacing: 0.07em;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+      color: var(--sub);
+      font-size: 9px;
+      line-height: 1;
+      letter-spacing: .10em;
       text-transform: uppercase;
     }
 
-    .badge {
+    .table {
+      width: 100%;
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(120px, 1.1fr) minmax(180px, 2fr) auto;
+      min-height: 34px;
+      border-top: 1px solid var(--line);
+      align-items: stretch;
+    }
+
+    .row:first-child { border-top: 0; }
+
+    .row.header {
+      min-height: 24px;
       color: var(--muted);
       font-size: 9px;
       line-height: 1;
-      letter-spacing: 0.11em;
+      letter-spacing: .09em;
       text-transform: uppercase;
     }
 
-    .app-description {
-      margin: 0;
-      max-width: 330px;
-      color: var(--sub);
+    .row.item:hover { background: var(--hover); }
+
+    .cell {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      padding: 6px 8px;
+    }
+
+    .cell:first-child { padding-left: 0; }
+    .cell:last-child { padding-right: 0; }
+
+    .name {
       font-size: 11px;
-      line-height: 1.75;
+      font-weight: 400;
+      letter-spacing: .055em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .arrow {
+    .description {
       color: var(--sub);
-      line-height: 1.4;
-      transform: translateY(1px);
-      transition: transform 160ms ease, color 160ms ease;
+      font-size: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .app-card:hover .arrow,
-    .app-card:focus-visible .arrow {
-      color: var(--ink);
-      transform: translate(3px, 1px);
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 20px;
+      min-width: 42px;
+      border: 1px solid var(--line);
+      background: transparent;
+      padding: 0 7px;
+      color: var(--sub);
+      font-size: 9px;
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: .07em;
+      text-decoration: none;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .action:hover,
+    .action:focus-visible {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--bg);
+      outline: none;
     }
 
     .empty {
       display: none;
-      padding: 28px 0;
+      padding: 14px 0;
       color: var(--muted);
-      border-bottom: 1px solid var(--line);
+      font-size: 10px;
     }
 
-    .empty.visible { display: block; }
-
-    .placeholder {
-      display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
-      gap: 14px;
-      padding: 18px 0 19px;
-      border-bottom: 1px solid var(--line);
-      color: var(--muted);
-    }
-
-    .placeholder-title {
-      margin: 0 0 4px;
-      font-size: 12px;
-      font-weight: 300;
-      line-height: 1.6;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-    }
-
-    .placeholder-copy {
-      margin: 0;
-      font-size: 11px;
-      line-height: 1.75;
-    }
+    .empty.show { display: block; }
 
     .footer {
       display: flex;
       justify-content: space-between;
-      gap: 18px;
-      margin-top: 48px;
+      gap: 12px;
+      margin-top: 10px;
       color: var(--muted);
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-size: 9px;
+      line-height: 1.4;
+      letter-spacing: .06em;
     }
 
-    @media (max-width: 420px) {
-      .app {
-        padding-left: 18px;
-        padding-right: 18px;
-      }
-
-      .topbar { margin-bottom: 46px; }
-      .hero { margin-bottom: 42px; }
-      .hero-title { max-width: 360px; }
-      .hero-copy { max-width: 330px; }
-      .app-card { grid-template-columns: 28px minmax(0, 1fr) max-content; gap: 10px; }
-      .placeholder { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
+    .download-status {
+      min-height: 1em;
+      text-align: right;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        scroll-behavior: auto !important;
-        transition: none !important;
-      }
+    @media (max-width: 560px) {
+      .app { padding-left: 14px; padding-right: 14px; }
+      .topbar { margin-bottom: 16px; }
+      .search { width: 86px; }
+      .row { grid-template-columns: minmax(0, 1fr) auto; }
+      .row .cell:nth-child(2) { display: none; }
+      .row.header .cell:nth-child(3) { justify-content: flex-end; }
+      .cell { padding-top: 5px; padding-bottom: 5px; }
     }
   </style>
 </head>
@@ -336,108 +268,158 @@
   <main class="app">
     <header class="topbar">
       <h1 class="brand">HHHUUUBBB</h1>
-      <nav class="nav" aria-label="Utility navigation">
-        <button class="text-button" id="themeButton" type="button" aria-label="Switch color theme">DARK</button>
-        <a class="nav-link" href="https://github.com/VAMRSS/HHHUUUBBB" target="_blank" rel="noreferrer">GITHUB</a>
-      </nav>
+      <div class="controls">
+        <input id="searchInput" class="search" type="search" placeholder="SEARCH" autocomplete="off" aria-label="Search applications">
+        <button id="themeButton" class="text-btn" type="button" aria-label="Toggle theme">DARK</button>
+      </div>
     </header>
 
-    <section class="hero" aria-labelledby="hero-title">
-      <p class="eyebrow">Web Application Hub / VAMRSS</p>
-      <h2 class="hero-title" id="hero-title">Small tools.<br>One entrance.</h2>
-      <p class="hero-copy">
-        個別に増えていくWebアプリを、一つの入口から素早く開くためのハブです。
-        必要な機能だけを、必要なときに。
-      </p>
+    <div class="section-line">
+      <span>WEB APPLICATIONS</span>
+      <span id="countLabel">01</span>
+    </div>
+
+    <section class="table" aria-label="Web applications">
+      <div class="row header" aria-hidden="true">
+        <div class="cell">APP</div>
+        <div class="cell">DESCRIPTION</div>
+        <div class="cell">ACTION</div>
+      </div>
+      <div id="appRows"></div>
     </section>
 
-    <section aria-labelledby="apps-heading">
-      <div class="tools">
-        <div class="search-wrap">
-          <label class="search-label" for="searchInput" id="apps-heading">Applications</label>
-          <input class="search" id="searchInput" type="search" placeholder="Search applications" autocomplete="off" spellcheck="false">
-        </div>
-        <div class="count" id="appCount" aria-live="polite">01 APP</div>
-      </div>
-
-      <div class="app-list" id="appList">
-        <a
-          class="app-card"
-          href="https://vamrss.github.io/memotimer/"
-          data-search="memotimer memo timer clipboard メモ タイマー コピー productivity utility"
-        >
-          <span class="app-index">01</span>
-          <span>
-            <span class="app-title-row">
-              <span class="app-title">MEMOTIMER</span>
-              <span class="badge">Utility</span>
-            </span>
-            <span class="app-description">クリックでコピーできるメモと、残り時間を見せないタイマー。</span>
-          </span>
-          <span class="arrow" aria-hidden="true">↗</span>
-        </a>
-      </div>
-
-      <p class="empty" id="emptyState">No applications found.</p>
-
-      <div class="placeholder" aria-hidden="true">
-        <span class="app-index">+</span>
-        <span>
-          <p class="placeholder-title">NEXT APPLICATION</p>
-          <p class="placeholder-copy">新しいWebアプリは、この一覧へ追加していきます。</p>
-        </span>
-      </div>
-    </section>
+    <div id="emptyState" class="empty">NO MATCHING APPLICATIONS</div>
 
     <footer class="footer">
-      <span>HHHUUUBBB</span>
-      <span>v0.1.0 / 2026</span>
+      <span>VAMRSS</span>
+      <span id="downloadStatus" class="download-status"></span>
     </footer>
   </main>
 
   <script>
-    (() => {
-      const root = document.documentElement;
-      const themeButton = document.getElementById('themeButton');
-      const searchInput = document.getElementById('searchInput');
-      const cards = [...document.querySelectorAll('.app-card')];
-      const appCount = document.getElementById('appCount');
-      const emptyState = document.getElementById('emptyState');
-      const themeMeta = document.querySelector('meta[name="theme-color"]');
+    const APPS = [
+      {
+        name: 'MEMOTIMER',
+        description: 'Memo / hidden countdown timer',
+        openUrl: 'https://vamrss.github.io/memotimer/',
+        htmlUrl: 'https://raw.githubusercontent.com/VAMRSS/memotimer/main/index.html',
+        fileName: 'memotimer.html'
+      }
+    ];
 
-      const setTheme = (theme) => {
-        root.dataset.theme = theme;
-        themeButton.textContent = theme === 'dark' ? 'LIGHT' : 'DARK';
-        themeButton.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`);
-        themeMeta.setAttribute('content', theme === 'dark' ? '#101312' : '#f8f9f9');
-        localStorage.setItem('hhh-theme', theme);
-      };
+    const root = document.documentElement;
+    const themeButton = document.getElementById('themeButton');
+    const searchInput = document.getElementById('searchInput');
+    const appRows = document.getElementById('appRows');
+    const emptyState = document.getElementById('emptyState');
+    const countLabel = document.getElementById('countLabel');
+    const downloadStatus = document.getElementById('downloadStatus');
 
-      const savedTheme = localStorage.getItem('hhh-theme');
-      const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(savedTheme || (systemDark ? 'dark' : 'light'));
+    function padCount(value) {
+      return String(value).padStart(2, '0');
+    }
 
-      themeButton.addEventListener('click', () => {
-        setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+    function setTheme(theme) {
+      root.dataset.theme = theme;
+      themeButton.textContent = theme === 'dark' ? 'LIGHT' : 'DARK';
+      localStorage.setItem('hhhuuubbb-theme', theme);
+      document.querySelector('meta[name="theme-color"]').setAttribute(
+        'content',
+        theme === 'dark' ? '#101312' : '#f8f9f9'
+      );
+    }
+
+    const savedTheme = localStorage.getItem('hhhuuubbb-theme');
+    const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(savedTheme || (systemDark ? 'dark' : 'light'));
+
+    themeButton.addEventListener('click', () => {
+      setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+    });
+
+    function createRow(app) {
+      const row = document.createElement('div');
+      row.className = 'row item';
+      row.dataset.search = `${app.name} ${app.description}`.toLowerCase();
+
+      const nameCell = document.createElement('div');
+      nameCell.className = 'cell name';
+      nameCell.textContent = app.name;
+
+      const descriptionCell = document.createElement('div');
+      descriptionCell.className = 'cell description';
+      descriptionCell.textContent = app.description;
+
+      const actionCell = document.createElement('div');
+      actionCell.className = 'cell actions';
+
+      const open = document.createElement('a');
+      open.className = 'action';
+      open.href = app.openUrl;
+      open.target = '_blank';
+      open.rel = 'noopener noreferrer';
+      open.textContent = 'OPEN';
+
+      const download = document.createElement('button');
+      download.className = 'action';
+      download.type = 'button';
+      download.textContent = 'HTML';
+      download.setAttribute('aria-label', `Download ${app.name} HTML`);
+      download.addEventListener('click', () => downloadHtml(app));
+
+      actionCell.append(open, download);
+      row.append(nameCell, descriptionCell, actionCell);
+      return row;
+    }
+
+    function renderApps() {
+      appRows.innerHTML = '';
+      APPS.forEach(app => appRows.appendChild(createRow(app)));
+      applySearch();
+    }
+
+    function applySearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      const rows = [...appRows.querySelectorAll('.item')];
+      let visible = 0;
+
+      rows.forEach(row => {
+        const show = !query || row.dataset.search.includes(query);
+        row.style.display = show ? '' : 'none';
+        if (show) visible += 1;
       });
 
-      const updateFilter = () => {
-        const query = searchInput.value.trim().toLowerCase();
-        let visible = 0;
+      countLabel.textContent = padCount(visible);
+      emptyState.classList.toggle('show', visible === 0);
+    }
 
-        cards.forEach((card) => {
-          const haystack = `${card.textContent} ${card.dataset.search || ''}`.toLowerCase();
-          const match = !query || haystack.includes(query);
-          card.hidden = !match;
-          if (match) visible += 1;
-        });
+    async function downloadHtml(app) {
+      downloadStatus.textContent = 'DOWNLOADING…';
+      try {
+        const response = await fetch(app.htmlUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const text = await response.text();
+        const blob = new Blob([text], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = app.fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        downloadStatus.textContent = 'DOWNLOADED';
+      } catch (error) {
+        downloadStatus.textContent = 'DOWNLOAD FAILED';
+      }
 
-        appCount.textContent = `${String(visible).padStart(2, '0')} ${visible === 1 ? 'APP' : 'APPS'}`;
-        emptyState.classList.toggle('visible', visible === 0);
-      };
+      window.setTimeout(() => {
+        downloadStatus.textContent = '';
+      }, 1800);
+    }
 
-      searchInput.addEventListener('input', updateFilter);
-    })();
+    searchInput.addEventListener('input', applySearch);
+    renderApps();
   </script>
 </body>
 </html>
