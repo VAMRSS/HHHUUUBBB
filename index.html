@@ -13,8 +13,6 @@
       --ink: #111714;
       --sub: #68736f;
       --muted: #9aa5a1;
-      --invert-bg: #111714;
-      --invert-ink: #f8f9f9;
       --font-main: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
     }
 
@@ -23,8 +21,6 @@
       --ink: #edf1ef;
       --sub: #a4aeaa;
       --muted: #707b77;
-      --invert-bg: #edf1ef;
-      --invert-ink: #101312;
     }
 
     * { box-sizing: border-box; }
@@ -46,14 +42,9 @@
       letter-spacing: 0.01em;
     }
 
-    button, input { font: inherit; }
+    button { font: inherit; }
 
-    button {
-      color: inherit;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    button,
     a {
       color: inherit;
       -webkit-tap-highlight-color: transparent;
@@ -70,91 +61,48 @@
     .topbar {
       display: grid;
       grid-template-columns: minmax(0, 1fr) max-content;
-      grid-template-areas: "logo nav";
       align-items: start;
       column-gap: 18px;
-      row-gap: 0;
       margin-bottom: 48px;
     }
 
-    .brand {
-      grid-area: logo;
-      margin: 0;
-      font-size: 12px;
-      font-weight: 300;
-      line-height: 1;
-      letter-spacing: 0.11em;
-      white-space: nowrap;
-    }
-
-    .text-nav {
-      grid-area: nav;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      justify-content: flex-end;
-      flex-wrap: nowrap;
-      text-align: right;
-      align-self: start;
-      justify-self: end;
-      padding: 0;
-      margin: 0;
-      line-height: 1;
-      white-space: nowrap;
-    }
-
-    .text-button {
+    .brand-button,
+    .text-link,
+    .action {
       appearance: none;
       border: 0;
       background: transparent;
+      margin: 0;
       padding: 0 2px;
       color: var(--sub);
       font-size: 12px;
       font-weight: 300;
       line-height: 1;
       letter-spacing: 0.09em;
-      text-transform: uppercase;
       text-decoration: none;
       cursor: pointer;
     }
 
-    .text-button:hover,
-    .text-button:focus-visible {
+    .brand-button {
+      justify-self: start;
+      padding-left: 0;
+      color: var(--ink);
+      letter-spacing: 0.11em;
+    }
+
+    .text-link {
+      justify-self: end;
+      text-transform: uppercase;
+    }
+
+    .brand-button:hover,
+    .brand-button:focus-visible,
+    .text-link:hover,
+    .text-link:focus-visible,
+    .action:hover,
+    .action:focus-visible {
       color: var(--ink);
       outline: none;
-    }
-
-    .search-line {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 11px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .search-wrap {
-      min-width: 0;
-    }
-
-    #searchInput {
-      width: 100%;
-      min-width: 0;
-      min-height: 24px;
-      border: 0;
-      border-radius: 0;
-      background: var(--ink);
-      color: var(--bg);
-      padding: 2px 8px;
-      outline: none;
-      font-size: 12px;
-      font-weight: 300;
-      line-height: 2;
-      text-align: left;
-    }
-
-    #searchInput::placeholder {
-      color: var(--bg);
-      opacity: 0.88;
     }
 
     .section-title {
@@ -171,139 +119,62 @@
       gap: 0;
     }
 
-    .list-head,
     .app-row {
       width: 100%;
       display: grid;
-      grid-template-columns: 4.5em minmax(0, 1fr) 7.5em;
+      grid-template-columns: minmax(0, 1fr) max-content;
       gap: 1em;
       align-items: baseline;
-      border: 0;
-      background: transparent;
       padding: 1px 0;
-      text-align: left;
     }
 
-    .list-head {
-      color: var(--muted);
-    }
-
-    .app-row {
-      color: var(--ink);
-    }
-
-    .app-name,
-    .app-description {
+    .app-name {
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .app-description {
-      color: var(--sub);
-    }
-
     .actions {
       display: flex;
       gap: 0 5px;
-      justify-content: flex-start;
+      justify-content: flex-end;
       align-items: baseline;
       white-space: nowrap;
     }
 
     .action {
-      appearance: none;
-      border: 0;
-      background: transparent;
-      margin: 0;
-      padding: 0 2px;
-      color: var(--sub);
-      font: inherit;
-      font-weight: 300;
       line-height: 2;
-      letter-spacing: 0.09em;
       text-transform: uppercase;
-      text-decoration: none;
-      cursor: pointer;
     }
-
-    .action:hover,
-    .action:focus-visible {
-      color: var(--ink);
-      outline: none;
-    }
-
-    .count {
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .empty {
-      display: none;
-      color: var(--muted);
-      padding: 1px 0;
-    }
-
-    .empty.show { display: block; }
 
     .footer {
       display: flex;
-      justify-content: space-between;
-      gap: 12px;
+      justify-content: flex-end;
       margin-top: 24px;
       color: var(--muted);
-    }
-
-    .download-status {
-      text-align: right;
       min-height: 1em;
     }
 
     @media (max-width: 420px) {
       .topbar { column-gap: 12px; }
-      .text-nav { gap: 8px; }
-      .list-head,
-      .app-row {
-        grid-template-columns: 4.5em minmax(0, 1fr) 7.5em;
-        gap: .7em;
-      }
+      .app-row { gap: .7em; }
     }
   </style>
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <h1 class="brand">HHHUUUBBB</h1>
-      <nav class="text-nav" aria-label="Utilities">
-        <button id="focusSearch" class="text-button" type="button">SEARCH</button>
-        <button id="themeButton" class="text-button" type="button" aria-label="Toggle theme">DARK</button>
-      </nav>
+      <button id="themeButton" class="brand-button" type="button" aria-label="Toggle light and dark theme" title="Toggle light / dark theme">HHHUUUBBB</button>
+      <a class="text-link" href="https://github.com/VAMRSS/HHHUUUBBB" target="_blank" rel="noopener noreferrer">GITHUB</a>
     </header>
-
-    <div class="search-line">
-      <div class="search-wrap">
-        <input id="searchInput" type="search" placeholder="SEARCH APPLICATIONS" autocomplete="off" aria-label="Search applications">
-      </div>
-      <span id="countLabel" class="count">01</span>
-    </div>
 
     <h2 class="section-title">WEB APPLICATIONS</h2>
 
-    <section class="list" aria-label="Web applications">
-      <div class="list-head" aria-hidden="true">
-        <span>APP</span>
-        <span>DESCRIPTION</span>
-        <span>ACTION</span>
-      </div>
-      <div id="appRows"></div>
-    </section>
-
-    <div id="emptyState" class="empty">NO MATCHING APPLICATIONS</div>
+    <section id="appRows" class="list" aria-label="Web applications"></section>
 
     <footer class="footer">
-      <span>VAMRSS</span>
-      <span id="downloadStatus" class="download-status"></span>
+      <span id="downloadStatus"></span>
     </footer>
   </main>
 
@@ -311,7 +182,6 @@
     const APPS = [
       {
         name: 'MEMOTIMER',
-        description: 'Memo / hidden countdown timer',
         openUrl: 'https://vamrss.github.io/memotimer/',
         htmlUrl: 'https://raw.githubusercontent.com/VAMRSS/memotimer/main/index.html',
         fileName: 'memotimer.html'
@@ -320,20 +190,11 @@
 
     const root = document.documentElement;
     const themeButton = document.getElementById('themeButton');
-    const focusSearch = document.getElementById('focusSearch');
-    const searchInput = document.getElementById('searchInput');
     const appRows = document.getElementById('appRows');
-    const emptyState = document.getElementById('emptyState');
-    const countLabel = document.getElementById('countLabel');
     const downloadStatus = document.getElementById('downloadStatus');
-
-    function padCount(value) {
-      return String(value).padStart(2, '0');
-    }
 
     function setTheme(theme) {
       root.dataset.theme = theme;
-      themeButton.textContent = theme === 'dark' ? 'LIGHT' : 'DARK';
       localStorage.setItem('hhhuuubbb-theme', theme);
       document.querySelector('meta[name="theme-color"]').setAttribute(
         'content',
@@ -349,23 +210,13 @@
       setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
     });
 
-    focusSearch.addEventListener('click', () => {
-      searchInput.focus();
-      searchInput.select();
-    });
-
     function createRow(app) {
       const row = document.createElement('div');
       row.className = 'app-row';
-      row.dataset.search = `${app.name} ${app.description}`.toLowerCase();
 
       const name = document.createElement('span');
       name.className = 'app-name';
       name.textContent = app.name;
-
-      const description = document.createElement('span');
-      description.className = 'app-description';
-      description.textContent = app.description;
 
       const actions = document.createElement('span');
       actions.className = 'actions';
@@ -385,29 +236,13 @@
       download.addEventListener('click', () => downloadHtml(app));
 
       actions.append(open, download);
-      row.append(name, description, actions);
+      row.append(name, actions);
       return row;
     }
 
     function renderApps() {
       appRows.innerHTML = '';
       APPS.forEach(app => appRows.appendChild(createRow(app)));
-      applySearch();
-    }
-
-    function applySearch() {
-      const query = searchInput.value.trim().toLowerCase();
-      const rows = [...appRows.querySelectorAll('.app-row')];
-      let visible = 0;
-
-      rows.forEach(row => {
-        const show = !query || row.dataset.search.includes(query);
-        row.style.display = show ? 'grid' : 'none';
-        if (show) visible += 1;
-      });
-
-      countLabel.textContent = padCount(visible);
-      emptyState.classList.toggle('show', visible === 0);
     }
 
     async function downloadHtml(app) {
@@ -435,7 +270,6 @@
       }, 1800);
     }
 
-    searchInput.addEventListener('input', applySearch);
     renderApps();
   </script>
 </body>
