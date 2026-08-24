@@ -1,24 +1,1049 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PDF → JPEG Batch Redaction</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF → JPEG Batch Redaction</title>
+  <style>
+    :root{
+      --bg:#f2f2f2;
+      --panel:#ffffff;
+      --text:#171717;
+      --muted:#727272;
+      --line:#d7d7d7;
+      --line-strong:#b9b9b9;
+      --button:#171717;
+      --button-text:#ffffff;
+      --overlay:rgba(0,0,0,.48);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Arial,"Helvetica Neue",sans-serif}
+    body{padding:24px}
+    .app{max-width:920px;margin:0 auto}
+    header{
+      display:flex;align-items:flex-end;justify-content:space-between;
+      gap:16px;padding:4px 0 14px;border-bottom:1px solid var(--line-strong)
+    }
+    h1{font-size:20px;line-height:1.2;margin:0;font-weight:700;letter-spacing:.01em}
+    .sub{font-size:11px;color:var(--muted);white-space:nowrap}
+    .drop{
+      margin-top:18px;background:var(--panel);border:1px dashed var(--line-strong);
+      min-height:150px;display:flex;align-items:center;justify-content:center;
+      text-align:center;padding:28px;cursor:pointer;transition:.15s ease
+    }
+    .drop.drag{background:#e9e9e9;border-color:#777}
+    .drop strong{display:block;font-size:15px;margin-bottom:8px}
+    .drop span{font-size:12px;color:var(--muted)}
+    input[type=file]{display:none}
+    .controls{
+      display:grid;grid-template-columns:1fr 1fr;gap:14px;
+      margin-top:14px;padding:14px 0;border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line)
+    }
+    .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}
+    select,input[type=range]{width:100%}
+    select{
+      height:34px;border:1px solid var(--line-strong);background:var(--panel);
+      color:var(--text);padding:0 9px;font-size:12px
+    }
+    .range-row{display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center}
+    .range-value{font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+
+    .queue-head{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      margin-top:18px;padding-bottom:8px;border-bottom:1px solid var(--line-strong)
+    }
+    .queue-title{font-size:12px;font-weight:700}
+    .queue-count{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+    .queue{display:none}
+    .queue.visible{display:block}
+    .pdf-row{
+      display:grid;grid-template-columns:112px minmax(0,1fr) auto;
+      gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)
+    }
+    .thumb-button{
+      width:112px;height:84px;background:#e5e5e5;border:1px solid var(--line);
+      display:flex;align-items:center;justify-content:center;overflow:hidden;
+      padding:0;cursor:pointer
+    }
+    .thumb{max-width:100%;max-height:100%;object-fit:contain;transition:transform .15s ease}
+    .pdf-info{min-width:0}
+    .pdf-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-meta{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.55}
+    .rotation-label{font-size:10px;color:var(--muted);margin-top:4px}
+    .redaction-label{font-size:10px;color:var(--muted);margin-top:4px}
+    .row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    button{
+      appearance:none;border:1px solid var(--button);background:var(--button);color:var(--button-text);
+      min-height:36px;padding:0 14px;font-size:12px;cursor:pointer
+    }
+    button.secondary{background:transparent;color:var(--text);border-color:var(--line-strong)}
+    button.icon-btn{min-width:40px;padding:0 10px;font-size:16px;line-height:1}
+    button.remove{font-size:11px}
+    button:disabled{opacity:.35;cursor:not-allowed}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .status{
+      margin-top:14px;font-size:12px;min-height:18px;color:var(--muted);
+      font-variant-numeric:tabular-nums
+    }
+    .progress{height:2px;background:#ddd;margin-top:8px;overflow:hidden}
+    .progress > div{height:100%;width:0;background:#171717;transition:width .15s linear}
+
+    .results{display:none;margin-top:18px;border-top:1px solid var(--line-strong)}
+    .results.visible{display:block}
+    .result-group{border-bottom:1px solid var(--line)}
+    .result-head{padding:11px 0}
+    .result-name{font-size:12px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .result-meta{font-size:10px;color:var(--muted);margin-top:3px}
+    .page-grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));
+      gap:8px;padding:0 0 12px
+    }
+    .page-card{background:var(--panel);border:1px solid var(--line);padding:6px;min-width:0}
+    .page-img{width:100%;height:92px;object-fit:contain;background:#ececec;display:block}
+    .page-bottom{display:flex;justify-content:flex-start;gap:6px;align-items:center;margin-top:6px}
+    .page-title{font-size:10px;white-space:nowrap}
+
+    .note{margin-top:18px;font-size:10px;line-height:1.7;color:var(--muted)}
+
+    .modal{
+      position:fixed;inset:0;background:var(--overlay);display:none;
+      align-items:center;justify-content:center;padding:22px;z-index:50
+    }
+    .modal.visible{display:flex}
+    .modal-panel{
+      width:min(1100px, 100%);max-height:min(92vh, 980px);overflow:hidden;
+      background:var(--panel);border:1px solid var(--line-strong);
+      display:flex;flex-direction:column
+    }
+    .modal-head{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:14px;border-bottom:1px solid var(--line)
+    }
+    .modal-title-wrap{min-width:0}
+    .modal-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .modal-sub{font-size:10px;color:var(--muted);margin-top:4px}
+    .modal-close{min-width:38px;padding:0 10px;font-size:18px;line-height:1}
+    .modal-body{
+      display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:0;min-height:0;flex:1
+    }
+    .editor-main{
+      padding:14px;border-right:1px solid var(--line);overflow:auto;background:#ededed
+    }
+    .editor-stage{
+      width:100%;display:flex;justify-content:center;align-items:flex-start
+    }
+    #editorCanvas{
+      display:block;background:#fff;border:1px solid var(--line-strong);max-width:100%;
+      cursor:crosshair
+    }
+    .editor-side{
+      padding:14px;overflow:auto
+    }
+    .editor-block{padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:14px}
+    .editor-block:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+    .editor-kicker{font-size:10px;color:var(--muted);margin-bottom:8px}
+    .editor-text{font-size:11px;line-height:1.7;color:var(--text)}
+    .editor-stats{font-size:11px;line-height:1.7}
+    .editor-actions{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .editor-actions button{justify-content:flex-start;text-align:left}
+    .hint{font-size:10px;color:var(--muted);line-height:1.7}
+
+    @media(max-width:760px){
+      body{padding:14px}
+      header{align-items:flex-start;flex-direction:column}
+      .sub{white-space:normal}
+      .controls{grid-template-columns:1fr}
+      .pdf-row{grid-template-columns:86px minmax(0,1fr)}
+      .thumb-button{width:86px;height:68px}
+      .row-actions{grid-column:1 / -1;justify-content:flex-start}
+      .page-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .modal{padding:10px}
+      .modal-body{grid-template-columns:1fr}
+      .editor-main{border-right:0;border-bottom:1px solid var(--line)}
+    }
+  </style>
 </head>
 <body>
-<script>
-(async()=>{
-const DATA='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';
-try{
-if(!('DecompressionStream' in window)) throw new Error('DecompressionStream is not supported.');
-const bytes=Uint8Array.from(atob(DATA),c=>c.charCodeAt(0));
-const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-const html=await new Response(stream).text();
-document.open();document.write(html);document.close();
-}catch(e){
-document.body.innerHTML='<pre style="font-family:system-ui;padding:24px;white-space:pre-wrap">Failed to load application.\n'+String(e)+'</pre>';
-}
-})();
-</script>
+  <main class="app">
+    <header>
+      <h1>PDF → JPEG</h1>
+      <div class="sub">BATCH / ROTATE / REDACTION / LOCAL CONVERTER</div>
+    </header>
+
+    <label class="drop" id="dropZone" for="fileInput">
+      <div>
+        <strong>複数のPDFをここにドロップ</strong>
+        <span>またはクリックしてPDFをまとめて選択</span>
+      </div>
+    </label>
+    <input id="fileInput" type="file" accept="application/pdf,.pdf" multiple />
+
+    <section class="controls">
+      <div class="field">
+        <label for="scale">出力サイズ</label>
+        <select id="scale">
+          <option value="1.5">標準（約108dpi）</option>
+          <option value="2" selected>高画質（約144dpi）</option>
+          <option value="3">超高画質（約216dpi）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="quality">JPEG品質</label>
+        <div class="range-row">
+          <input id="quality" type="range" min="50" max="100" step="1" value="92" />
+          <div class="range-value"><span id="qualityValue">92</span>%</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="queueSection" class="queue">
+      <div class="queue-head">
+        <div class="queue-title">PDF QUEUE</div>
+        <div class="queue-count" id="queueCount"></div>
+      </div>
+      <div id="pdfList"></div>
+    </section>
+
+    <div class="actions">
+      <button id="convertBtn" disabled>全PDFをJPEGに変換</button>
+      <button id="zipBtn" class="secondary" disabled>変換結果をまとめてZIP保存</button>
+      <button id="clearBtn" class="secondary" disabled>すべてクリア</button>
+    </div>
+
+    <div class="status" id="status">PDFを選択してください。</div>
+    <div class="progress"><div id="progressBar"></div></div>
+
+    <section class="results" id="results"></section>
+
+    <div class="note">
+      サムネイルをクリックすると、拡大プレビュー上で黒塗り範囲をドラッグ指定できます。<br>
+      黒塗りは「このPDFのみ」と「全PDFに共通適用」の両方に対応します。共通適用は、ページレイアウトや向きが共通のPDF群で使うと実用的です。<br>
+      回転指定と黒塗り指定は、書き出されるJPEG画像そのものに反映されます。<br>
+      変換後は、すべてのPDF・全ページを1つのZIPにまとめ、JPEGをZIP直下へそのまま格納します。<br>
+      変換処理はブラウザ内で行われ、PDFファイル自体はサーバーへ送信されません。初回利用時のみPDF.js / JSZipをCDNから読み込みます。
+    </div>
+  </main>
+
+  <div class="modal" id="editorModal">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+      <div class="modal-head">
+        <div class="modal-title-wrap">
+          <div class="modal-title" id="editorTitle">黒塗り設定</div>
+          <div class="modal-sub" id="editorSub">先頭ページの拡大プレビュー</div>
+        </div>
+        <button type="button" class="secondary modal-close" id="closeEditorBtn" aria-label="閉じる">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="editor-main">
+          <div class="editor-stage">
+            <canvas id="editorCanvas"></canvas>
+          </div>
+        </div>
+        <div class="editor-side">
+          <div class="editor-block">
+            <div class="editor-kicker">ADD REDACTION</div>
+            <div class="field">
+              <label for="redactionScope">追加先</label>
+              <select id="redactionScope">
+                <option value="local">このPDFのみ</option>
+                <option value="global">全PDFに共通適用</option>
+              </select>
+            </div>
+            <div class="hint" style="margin-top:10px;">
+              プレビュー上でドラッグすると黒塗り矩形を追加します。<br>
+              90°回転後の表示状態を基準に保存されます。
+            </div>
+          </div>
+
+          <div class="editor-block">
+            <div class="editor-kicker">CURRENT STATUS</div>
+            <div class="editor-stats" id="editorStats">-</div>
+          </div>
+
+          <div class="editor-block">
+            <div class="editor-kicker">EDIT</div>
+            <div class="editor-actions">
+              <button type="button" class="secondary" id="undoLocalBtn">このPDFの最後の黒塗りを削除</button>
+              <button type="button" class="secondary" id="clearLocalBtn">このPDFの黒塗りを全削除</button>
+              <button type="button" class="secondary" id="undoGlobalBtn">共通の最後の黒塗りを削除</button>
+              <button type="button" class="secondary" id="clearGlobalBtn">共通の黒塗りを全削除</button>
+            </div>
+          </div>
+
+          <div class="editor-block">
+            <div class="editor-kicker">NOTE</div>
+            <div class="hint">
+              黒塗りを追加・削除した後は、変換結果をいったん無効化し、再変換が必要になります。<br>
+              回転を変更した場合も、黒塗り位置を再確認してください。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script type="module">
+    import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+    const $ = id => document.getElementById(id);
+
+    const dropZone = $("dropZone");
+    const fileInput = $("fileInput");
+    const queueSection = $("queueSection");
+    const queueCount = $("queueCount");
+    const pdfList = $("pdfList");
+    const convertBtn = $("convertBtn");
+    const zipBtn = $("zipBtn");
+    const clearBtn = $("clearBtn");
+    const status = $("status");
+    const progressBar = $("progressBar");
+    const results = $("results");
+    const quality = $("quality");
+    const qualityValue = $("qualityValue");
+    const scale = $("scale");
+
+    const editorModal = $("editorModal");
+    const editorTitle = $("editorTitle");
+    const editorSub = $("editorSub");
+    const editorCanvas = $("editorCanvas");
+    const closeEditorBtn = $("closeEditorBtn");
+    const redactionScope = $("redactionScope");
+    const editorStats = $("editorStats");
+    const undoLocalBtn = $("undoLocalBtn");
+    const clearLocalBtn = $("clearLocalBtn");
+    const undoGlobalBtn = $("undoGlobalBtn");
+    const clearGlobalBtn = $("clearGlobalBtn");
+
+    let items = [];
+    let convertedGroups = [];
+    let globalRedactions = [];
+    let idSeed = 0;
+
+    const editorState = {
+      itemId: null,
+      baseCanvas: null,
+      drawing: false,
+      startX: 0,
+      startY: 0,
+      tempRect: null
+    };
+
+    quality.addEventListener("input", () => qualityValue.textContent = quality.value);
+
+    ["dragenter","dragover"].forEach(evt => dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add("drag");
+    }));
+    ["dragleave","drop"].forEach(evt => dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("drag");
+    }));
+
+    dropZone.addEventListener("drop", e => {
+      addFiles([...e.dataTransfer.files]);
+    });
+
+    fileInput.addEventListener("change", e => {
+      addFiles([...e.target.files]);
+      fileInput.value = "";
+    });
+
+    convertBtn.addEventListener("click", convertAll);
+    zipBtn.addEventListener("click", downloadAllZip);
+    clearBtn.addEventListener("click", resetAll);
+
+    closeEditorBtn.addEventListener("click", closeEditor);
+    editorModal.addEventListener("click", e => {
+      if (e.target === editorModal) closeEditor();
+    });
+    window.addEventListener("keydown", e => {
+      if (e.key === "Escape" && editorModal.classList.contains("visible")) closeEditor();
+    });
+
+    undoLocalBtn.addEventListener("click", () => {
+      const item = currentEditorItem();
+      if (!item || !item.redactions.length) return;
+      item.redactions.pop();
+      onRedactionChanged("このPDFの黒塗りを1件削除しました。");
+    });
+
+    clearLocalBtn.addEventListener("click", () => {
+      const item = currentEditorItem();
+      if (!item || !item.redactions.length) return;
+      item.redactions = [];
+      onRedactionChanged("このPDFの黒塗りを全削除しました。");
+    });
+
+    undoGlobalBtn.addEventListener("click", () => {
+      if (!globalRedactions.length) return;
+      globalRedactions.pop();
+      onRedactionChanged("共通の黒塗りを1件削除しました。");
+    });
+
+    clearGlobalBtn.addEventListener("click", () => {
+      if (!globalRedactions.length) return;
+      globalRedactions = [];
+      onRedactionChanged("共通の黒塗りを全削除しました。");
+    });
+
+    editorCanvas.addEventListener("mousedown", e => {
+      if (!editorState.baseCanvas) return;
+      const pos = canvasPoint(e);
+      editorState.drawing = true;
+      editorState.startX = pos.x;
+      editorState.startY = pos.y;
+      editorState.tempRect = null;
+    });
+
+    editorCanvas.addEventListener("mousemove", e => {
+      if (!editorState.drawing) return;
+      const pos = canvasPoint(e);
+      editorState.tempRect = normalizeRect(editorState.startX, editorState.startY, pos.x, pos.y);
+      redrawEditor();
+    });
+
+    const finishDraw = () => {
+      if (!editorState.drawing) return;
+      editorState.drawing = false;
+      const rect = editorState.tempRect;
+      editorState.tempRect = null;
+
+      if (!rect) {
+        redrawEditor();
+        return;
+      }
+
+      const minW = 0.008;
+      const minH = 0.008;
+      if (rect.w < minW || rect.h < minH) {
+        redrawEditor();
+        return;
+      }
+
+      const item = currentEditorItem();
+      if (!item) return;
+
+      if (redactionScope.value === "global") {
+        globalRedactions.push(rect);
+        onRedactionChanged("共通の黒塗りを追加しました。");
+      } else {
+        item.redactions.push(rect);
+        onRedactionChanged("このPDFの黒塗りを追加しました。");
+      }
+    };
+
+    editorCanvas.addEventListener("mouseup", finishDraw);
+    editorCanvas.addEventListener("mouseleave", finishDraw);
+
+    function isPdf(file){
+      return file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
+    }
+
+    function formatBytes(bytes){
+      if (!bytes) return "0 B";
+      const units = ["B","KB","MB","GB"];
+      const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+      return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + " " + units[i];
+    }
+
+    function baseName(name){
+      return name.replace(/\.pdf$/i, "");
+    }
+
+    function normalizedRotation(deg){
+      return ((deg % 360) + 360) % 360;
+    }
+
+    function cssRotation(deg){
+      return `rotate(${normalizedRotation(deg)}deg)`;
+    }
+
+    function currentEditorItem(){
+      return items.find(x => x.id === editorState.itemId) || null;
+    }
+
+    function normalizeRect(x1, y1, x2, y2){
+      const w = editorCanvas.width || 1;
+      const h = editorCanvas.height || 1;
+      const left = Math.max(0, Math.min(x1, x2));
+      const top = Math.max(0, Math.min(y1, y2));
+      const right = Math.min(w, Math.max(x1, x2));
+      const bottom = Math.min(h, Math.max(y1, y2));
+      return {
+        x: left / w,
+        y: top / h,
+        w: Math.max(0, right - left) / w,
+        h: Math.max(0, bottom - top) / h
+      };
+    }
+
+    function canvasPoint(evt){
+      const rect = editorCanvas.getBoundingClientRect();
+      const scaleX = editorCanvas.width / rect.width;
+      const scaleY = editorCanvas.height / rect.height;
+      return {
+        x: Math.max(0, Math.min(editorCanvas.width, (evt.clientX - rect.left) * scaleX)),
+        y: Math.max(0, Math.min(editorCanvas.height, (evt.clientY - rect.top) * scaleY))
+      };
+    }
+
+    function invalidateResults(){
+      convertedGroups.forEach(group => {
+        group.pages.forEach(p => URL.revokeObjectURL(p.url));
+      });
+      convertedGroups = [];
+      results.innerHTML = "";
+      results.classList.remove("visible");
+      zipBtn.disabled = true;
+      progressBar.style.width = "0%";
+    }
+
+    function updateControls(){
+      const ready = items.length > 0 && items.every(x => !x.loading && !x.error);
+      convertBtn.disabled = !ready;
+      clearBtn.disabled = items.length === 0;
+      zipBtn.disabled = convertedGroups.length === 0;
+    }
+
+    async function addFiles(files){
+      const pdfs = files.filter(isPdf);
+      if (!pdfs.length) {
+        status.textContent = "PDFファイルを選択してください。";
+        return;
+      }
+
+      for (const file of pdfs) {
+        const duplicate = items.some(x =>
+          x.file.name === file.name &&
+          x.file.size === file.size &&
+          x.file.lastModified === file.lastModified
+        );
+        if (duplicate) continue;
+
+        const item = {
+          id: ++idSeed,
+          file,
+          rotation: 0,
+          pages: null,
+          thumbUrl: null,
+          loading: true,
+          error: false,
+          redactions: []
+        };
+        items.push(item);
+        renderQueue();
+        await prepareThumbnail(item);
+      }
+
+      invalidateResults();
+      renderQueue();
+      updateControls();
+      status.textContent = `${items.length}件のPDFを読み込みました。必要に応じて回転・黒塗りを設定してから変換してください。`;
+    }
+
+    async function prepareThumbnail(item){
+      try{
+        const buf = await item.file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+        item.pages = pdf.numPages;
+
+        const page = await pdf.getPage(1);
+        const baseViewport = page.getViewport({scale: 1});
+        const maxW = 220;
+        const maxH = 160;
+        const thumbScale = Math.min(maxW / baseViewport.width, maxH / baseViewport.height, 1.5);
+        const viewport = page.getViewport({scale: thumbScale});
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d", {alpha: false});
+        canvas.width = Math.max(1, Math.floor(viewport.width));
+        canvas.height = Math.max(1, Math.floor(viewport.height));
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        await page.render({canvasContext: ctx, viewport}).promise;
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.82));
+        item.thumbUrl = URL.createObjectURL(blob);
+        item.loading = false;
+
+        page.cleanup();
+        pdf.cleanup();
+      }catch(err){
+        console.error(err);
+        item.loading = false;
+        item.error = true;
+      }
+      renderQueue();
+    }
+
+    function renderQueue(){
+      queueSection.classList.toggle("visible", items.length > 0);
+      queueCount.textContent = items.length ? `${items.length} PDF` : "";
+      pdfList.innerHTML = "";
+
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "pdf-row";
+        row.dataset.id = item.id;
+
+        const thumbButton = document.createElement("button");
+        thumbButton.type = "button";
+        thumbButton.className = "thumb-button";
+        thumbButton.title = "クリックして黒塗り設定";
+        thumbButton.addEventListener("click", () => openEditor(item.id));
+
+        if (item.thumbUrl) {
+          const img = document.createElement("img");
+          img.className = "thumb";
+          img.alt = `${item.file.name} の先頭ページ`;
+          img.src = item.thumbUrl;
+          img.style.transform = cssRotation(item.rotation);
+          thumbButton.appendChild(img);
+        } else {
+          const ph = document.createElement("span");
+          ph.style.fontSize = "10px";
+          ph.style.color = "#777";
+          ph.textContent = item.error ? "PREVIEW ERROR" : "LOADING…";
+          thumbButton.appendChild(ph);
+        }
+
+        const info = document.createElement("div");
+        info.className = "pdf-info";
+
+        const name = document.createElement("div");
+        name.className = "pdf-name";
+        name.textContent = item.file.name;
+
+        const meta = document.createElement("div");
+        meta.className = "pdf-meta";
+        const pageText = item.pages ? `${item.pages}ページ` : (item.error ? "ページ数取得失敗" : "ページ数確認中");
+        meta.textContent = `${pageText} / ${formatBytes(item.file.size)}`;
+
+        const rot = document.createElement("div");
+        rot.className = "rotation-label";
+        rot.textContent = `回転: ${normalizedRotation(item.rotation)}°`;
+
+        const redact = document.createElement("div");
+        redact.className = "redaction-label";
+        redact.textContent = `黒塗り: このPDF ${item.redactions.length}件 / 共通 ${globalRedactions.length}件`;
+
+        info.append(name, meta, rot, redact);
+
+        const actions = document.createElement("div");
+        actions.className = "row-actions";
+
+        const left = document.createElement("button");
+        left.type = "button";
+        left.className = "secondary icon-btn";
+        left.title = "左へ90°回転";
+        left.setAttribute("aria-label", `${item.file.name} を左へ90度回転`);
+        left.textContent = "↶";
+        left.addEventListener("click", () => rotateItem(item.id, -90));
+
+        const right = document.createElement("button");
+        right.type = "button";
+        right.className = "secondary icon-btn";
+        right.title = "右へ90°回転";
+        right.setAttribute("aria-label", `${item.file.name} を右へ90度回転`);
+        right.textContent = "↷";
+        right.addEventListener("click", () => rotateItem(item.id, 90));
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "secondary remove";
+        remove.textContent = "削除";
+        remove.addEventListener("click", () => removeItem(item.id));
+
+        actions.append(left, right, remove);
+        row.append(thumbButton, info, actions);
+        pdfList.appendChild(row);
+      });
+    }
+
+    function rotateItem(id, delta){
+      const item = items.find(x => x.id === id);
+      if (!item) return;
+      item.rotation = normalizedRotation(item.rotation + delta);
+      invalidateResults();
+      renderQueue();
+
+      if (editorState.itemId === item.id && editorModal.classList.contains("visible")) {
+        renderEditorPreview(item);
+      }
+
+      updateControls();
+      status.textContent = `${item.file.name}：${item.rotation}° 回転。必要に応じて黒塗り位置も再確認してください。`;
+    }
+
+    function removeItem(id){
+      const index = items.findIndex(x => x.id === id);
+      if (index < 0) return;
+      const [item] = items.splice(index, 1);
+      if (item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
+      if (editorState.itemId === item.id) closeEditor();
+      invalidateResults();
+      renderQueue();
+      updateControls();
+      status.textContent = items.length ? `${items.length}件のPDFが残っています。` : "PDFを選択してください。";
+    }
+
+    async function openEditor(id){
+      const item = items.find(x => x.id === id);
+      if (!item || item.loading || item.error) return;
+
+      editorState.itemId = id;
+      editorTitle.textContent = item.file.name;
+      editorSub.textContent = "先頭ページの拡大プレビュー / ドラッグで黒塗り範囲を追加";
+      editorModal.classList.add("visible");
+      await renderEditorPreview(item);
+      updateEditorStats();
+    }
+
+    function closeEditor(){
+      editorModal.classList.remove("visible");
+      editorState.itemId = null;
+      editorState.baseCanvas = null;
+      editorState.drawing = false;
+      editorState.tempRect = null;
+      const ctx = editorCanvas.getContext("2d");
+      ctx.clearRect(0, 0, editorCanvas.width || 1, editorCanvas.height || 1);
+    }
+
+    async function renderEditorPreview(item){
+      try{
+        const buf = await item.file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+        const page = await pdf.getPage(1);
+        const exportRotation = normalizedRotation((page.rotate || 0) + item.rotation);
+        const baseViewport = page.getViewport({scale: 1, rotation: exportRotation});
+        const maxW = 760;
+        const maxH = 980;
+        const previewScale = Math.min(maxW / baseViewport.width, maxH / baseViewport.height, 2.3);
+        const viewport = page.getViewport({scale: previewScale, rotation: exportRotation});
+
+        const baseCanvas = document.createElement("canvas");
+        const baseCtx = baseCanvas.getContext("2d", {alpha: false});
+        baseCanvas.width = Math.max(1, Math.floor(viewport.width));
+        baseCanvas.height = Math.max(1, Math.floor(viewport.height));
+        baseCtx.fillStyle = "#fff";
+        baseCtx.fillRect(0, 0, baseCanvas.width, baseCanvas.height);
+        await page.render({canvasContext: baseCtx, viewport}).promise;
+
+        editorCanvas.width = baseCanvas.width;
+        editorCanvas.height = baseCanvas.height;
+        editorState.baseCanvas = baseCanvas;
+        page.cleanup();
+        pdf.cleanup();
+
+        redrawEditor();
+      }catch(err){
+        console.error(err);
+        status.textContent = "黒塗りプレビューの表示に失敗しました。";
+      }
+    }
+
+    function redrawEditor(){
+      const ctx = editorCanvas.getContext("2d", {alpha: false});
+      if (!editorState.baseCanvas) {
+        ctx.clearRect(0, 0, editorCanvas.width || 1, editorCanvas.height || 1);
+        return;
+      }
+
+      ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+      ctx.drawImage(editorState.baseCanvas, 0, 0);
+
+      const item = currentEditorItem();
+      const allGlobal = globalRedactions;
+      const allLocal = item ? item.redactions : [];
+
+      drawRectSet(ctx, allGlobal, "rgba(0,0,0,0.92)");
+      drawRectSet(ctx, allLocal, "rgba(0,0,0,0.92)");
+
+      if (editorState.tempRect) {
+        drawRectSet(ctx, [editorState.tempRect], "rgba(0,0,0,0.7)", true);
+      }
+
+      updateEditorStats();
+    }
+
+    function drawRectSet(ctx, rects, fill, isPreview = false){
+      rects.forEach(rect => {
+        const x = Math.round(rect.x * editorCanvas.width);
+        const y = Math.round(rect.y * editorCanvas.height);
+        const w = Math.max(1, Math.round(rect.w * editorCanvas.width));
+        const h = Math.max(1, Math.round(rect.h * editorCanvas.height));
+        ctx.save();
+        ctx.fillStyle = fill;
+        ctx.fillRect(x, y, w, h);
+        ctx.lineWidth = isPreview ? 2 : 1;
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.strokeRect(x + 0.5, y + 0.5, w, h);
+        ctx.restore();
+      });
+    }
+
+    function updateEditorStats(){
+      const item = currentEditorItem();
+      const localCount = item ? item.redactions.length : 0;
+      const globalCount = globalRedactions.length;
+      editorStats.innerHTML =
+        `このPDF: <strong>${localCount}</strong> 件<br>` +
+        `共通適用: <strong>${globalCount}</strong> 件`;
+    }
+
+    function onRedactionChanged(message){
+      invalidateResults();
+      renderQueue();
+      redrawEditor();
+      updateControls();
+      status.textContent = `${message} 再変換してください。`;
+    }
+
+    async function convertAll(){
+      if (!items.length) return;
+
+      convertBtn.disabled = true;
+      zipBtn.disabled = true;
+      clearBtn.disabled = true;
+      invalidateResults();
+      results.classList.add("visible");
+
+      const totalPages = items.reduce((sum, item) => sum + (item.pages || 0), 0);
+      let donePages = 0;
+      const q = Number(quality.value) / 100;
+      const s = Number(scale.value);
+
+      try{
+        for (let fileIndex = 0; fileIndex < items.length; fileIndex++){
+          const item = items[fileIndex];
+          const buf = await item.file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+          const group = {
+            sourceName: item.file.name,
+            rotation: item.rotation,
+            pages: [],
+            redactionCount: item.redactions.length + globalRedactions.length
+          };
+
+          const pad = String(pdf.numPages).length;
+
+          for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++){
+            status.textContent = `変換中 ${fileIndex + 1}/${items.length} PDF ・ ${pageNo}/${pdf.numPages} ページ`;
+
+            const page = await pdf.getPage(pageNo);
+            const exportRotation = normalizedRotation((page.rotate || 0) + item.rotation);
+
+            const viewport = page.getViewport({
+              scale: s,
+              rotation: exportRotation
+            });
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d", {alpha: false});
+            canvas.width = Math.max(1, Math.floor(viewport.width));
+            canvas.height = Math.max(1, Math.floor(viewport.height));
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+
+            await page.render({canvasContext: ctx, viewport}).promise;
+
+            const mergedRedactions = [...globalRedactions, ...item.redactions];
+            if (mergedRedactions.length) {
+              ctx.save();
+              ctx.fillStyle = "#000";
+              mergedRedactions.forEach(rect => {
+                const x = Math.max(0, Math.min(canvas.width, Math.round(rect.x * canvas.width)));
+                const y = Math.max(0, Math.min(canvas.height, Math.round(rect.y * canvas.height)));
+                const w = Math.max(1, Math.min(canvas.width - x, Math.round(rect.w * canvas.width)));
+                const h = Math.max(1, Math.min(canvas.height - y, Math.round(rect.h * canvas.height)));
+                ctx.fillRect(x, y, w, h);
+              });
+              ctx.restore();
+            }
+
+            const blob = await new Promise(resolve =>
+              canvas.toBlob(resolve, "image/jpeg", q)
+            );
+
+            const filename = `${baseName(item.file.name)}_${String(pageNo).padStart(pad,"0")}.jpg`;
+            const url = URL.createObjectURL(blob);
+
+            group.pages.push({
+              pageNo,
+              filename,
+              blob,
+              url,
+              width: canvas.width,
+              height: canvas.height
+            });
+
+            donePages++;
+            progressBar.style.width = `${totalPages ? Math.round((donePages / totalPages) * 100) : 100}%`;
+
+            page.cleanup();
+            canvas.width = 1;
+            canvas.height = 1;
+          }
+
+          pdf.cleanup();
+          convertedGroups.push(group);
+          renderResults();
+        }
+
+        progressBar.style.width = "100%";
+        status.textContent = `${items.length}件 / ${totalPages}ページをJPEGに変換しました。ZIP保存できます。`;
+        zipBtn.disabled = convertedGroups.length === 0;
+      }catch(err){
+        console.error(err);
+        status.textContent = "変換に失敗しました。PDFが破損していないか、またはパスワード保護されていないか確認してください。";
+      }finally{
+        convertBtn.disabled = false;
+        clearBtn.disabled = items.length === 0;
+      }
+    }
+
+    function renderResults(){
+      results.innerHTML = "";
+
+      convertedGroups.forEach(group => {
+        const wrap = document.createElement("div");
+        wrap.className = "result-group";
+
+        const head = document.createElement("div");
+        head.className = "result-head";
+
+        const name = document.createElement("div");
+        name.className = "result-name";
+        name.textContent = group.sourceName;
+
+        const meta = document.createElement("div");
+        meta.className = "result-meta";
+        meta.textContent = `${group.pages.length} JPEG / 回転 ${normalizedRotation(group.rotation)}° / 黒塗り ${group.redactionCount}件`;
+
+        head.append(name, meta);
+
+        const grid = document.createElement("div");
+        grid.className = "page-grid";
+
+        group.pages.forEach(page => {
+          const card = document.createElement("div");
+          card.className = "page-card";
+
+          const img = document.createElement("img");
+          img.className = "page-img";
+          img.src = page.url;
+          img.alt = `${group.sourceName} ${page.pageNo}ページ目`;
+
+          const bottom = document.createElement("div");
+          bottom.className = "page-bottom";
+
+          const title = document.createElement("span");
+          title.className = "page-title";
+          title.textContent = `Page ${page.pageNo}`;
+
+          bottom.append(title);
+          card.append(img, bottom);
+          grid.appendChild(card);
+        });
+
+        wrap.append(head, grid);
+        results.appendChild(wrap);
+      });
+
+      results.classList.toggle("visible", convertedGroups.length > 0);
+    }
+
+    async function downloadAllZip(){
+      if (!convertedGroups.length || !window.JSZip) return;
+
+      zipBtn.disabled = true;
+      status.textContent = "変換結果を1つのZIPにまとめています…";
+
+      try{
+        const zip = new JSZip();
+        const usedNames = new Set();
+
+        convertedGroups.forEach(group => {
+          group.pages.forEach(page => {
+            let filename = page.filename;
+            const stem = filename.replace(/\.jpg$/i, "");
+            let n = 2;
+
+            while (usedNames.has(filename.toLowerCase())) {
+              filename = `${stem}_${n++}.jpg`;
+            }
+
+            usedNames.add(filename.toLowerCase());
+            zip.file(filename, page.blob);
+          });
+        });
+
+        const blob = await zip.generateAsync(
+          {type:"blob", compression:"STORE"},
+          meta => {
+            progressBar.style.width = `${Math.round(meta.percent)}%`;
+          }
+        );
+
+        triggerDownload(blob, "pdf-to-jpeg_batch.zip");
+        status.textContent = "変換結果を1つのZIPにまとめて保存しました。";
+      }catch(err){
+        console.error(err);
+        status.textContent = "ZIP作成に失敗しました。";
+      }finally{
+        zipBtn.disabled = false;
+      }
+    }
+
+    function triggerDownload(blob, filename){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1200);
+    }
+
+    function resetAll(){
+      items.forEach(item => {
+        if (item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
+      });
+      convertedGroups.forEach(group => {
+        group.pages.forEach(p => URL.revokeObjectURL(p.url));
+      });
+
+      items = [];
+      convertedGroups = [];
+      globalRedactions = [];
+      pdfList.innerHTML = "";
+      results.innerHTML = "";
+      queueSection.classList.remove("visible");
+      results.classList.remove("visible");
+      progressBar.style.width = "0%";
+      fileInput.value = "";
+      closeEditor();
+      status.textContent = "PDFを選択してください。";
+      updateControls();
+    }
+
+    window.addEventListener("beforeunload", () => {
+      items.forEach(item => {
+        if (item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
+      });
+      convertedGroups.forEach(group => {
+        group.pages.forEach(p => URL.revokeObjectURL(p.url));
+      });
+    });
+
+    updateControls();
+  </script>
 </body>
 </html>
