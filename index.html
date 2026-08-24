@@ -133,6 +133,15 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .app-name:hover,
+    .app-name:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      outline: none;
     }
 
     .actions {
@@ -197,6 +206,12 @@
         openUrl: './yt-plain-wsv-v1.2.1.html',
         htmlUrl: './yt-plain-wsv-v1.2.1.html',
         fileName: 'yt-plain-wsv-v1.2.1.html'
+      },
+      {
+        name: 'PDF → JPEG',
+        openUrl: './pdf-to-jpeg-batch-v6.html',
+        htmlUrl: './pdf-to-jpeg-batch-v6.html',
+        fileName: 'pdf-to-jpeg-batch-v6.html'
       }
     ];
 
@@ -226,19 +241,15 @@
       const row = document.createElement('div');
       row.className = 'app-row';
 
-      const name = document.createElement('span');
+      const name = document.createElement('a');
       name.className = 'app-name';
+      name.href = app.openUrl;
+      name.target = '_blank';
+      name.rel = 'noopener noreferrer';
       name.textContent = app.name;
 
       const actions = document.createElement('span');
       actions.className = 'actions';
-
-      const open = document.createElement('a');
-      open.className = 'action';
-      open.href = app.openUrl;
-      open.target = '_blank';
-      open.rel = 'noopener noreferrer';
-      open.textContent = 'OPEN';
 
       const download = document.createElement('button');
       download.className = 'action';
@@ -247,7 +258,7 @@
       download.setAttribute('aria-label', `Download ${app.name} HTML`);
       download.addEventListener('click', () => downloadHtml(app));
 
-      actions.append(open, download);
+      actions.append(download);
       row.append(name, actions);
       return row;
     }
