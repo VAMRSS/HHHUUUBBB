@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <title>YT Plain</title>
+  <style>
+    :root {
+      --bg:#f8f9f9;
+      --ink:#111714;
+      --sub:#68736f;
+      --muted:#9aa5a1;
+      --line:#d9ddda;
+      --line-soft:rgba(17,23,20,.12);
+      --surface:#ffffff;
+      --surface-soft:rgba(104,115,111,.08);
+      --input-bg:rgba(96,112,132,.10);
+      --danger:#9b3144;
+
+      --font-main:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","YuGothic",Meiryo,sans-serif;
+      --font-serif:Georgia,"Times New Roman","Yu Mincho","Hiragino Mincho ProN",serif;
+      --font-mono:"Courier New",Courier,monospace;
+
+      --page-max:980px;
+      --gap-xs:4px;
+      --gap-s:8px;
+      --gap-m:12px;
+      --gap-l:24px;
+      --gap-xl:48px;
+    }
+
+    *{box-sizing:border-box}
+
+    html{
+      -webkit-text-size-adjust:100%;
+      background:var(--bg);
+    }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:var(--font-main);
+      font-size:12px;
+      font-weight:300;
+      line-height:2;
+      letter-spacing:.01em;
+    }
+
+    button,input,select{
+      font:inherit;
+      letter-spacing:inherit;
+      border-radius:0;
+    }
+
+    button{cursor:pointer}
+
+    .shell{
+      width:min(100%,var(--page-max));
+      margin:0 auto;
+      padding:24px 18px 64px;
+    }
+
+    header{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
+      align-items:start;
+      margin:0 0 48px;
+      padding:0;
+    }
+
+    .brand h1{
+      margin:0;
+      color:var(--ink);
+      font-size:12px;
+      font-weight:300;
+      line-height:2;
+      letter-spacing:.01em;
+      white-space:nowrap;
+    }
+
+    .brand p{display:none}
+
+    .top-actions{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:8px;
+    }
+
+    .icon-btn,
+    .btn,
+    .primary,
+    .open,
+    .copy{
+      appearance:none;
+      border:0;
+      border-radius:0;
+      background:transparent;
+      color:var(--sub);
+      padding:0;
+      min-height:24px;
+      font-size:12px;
+      font-weight:300;
+      line-height:2;
+      letter-spacing:.09em;
+      text-transform:uppercase;
+    }
+
+    .icon-btn{
+      width:auto;
+      min-height:24px;
+    }
+
+    .icon-btn:hover,
+    .btn:hover,
+    .primary:hover,
+    .open:hover,
+    .copy:hover{
+      color:var(--ink);
+    }
+
+    .primary,
+    .open{
+      color:var(--ink);
+    }
+
+    .primary::before,
+    .open::before{content:"[";color:var(--muted);margin-right:.3em}
+    .primary::after,
+    .open::after{content:"]";color:var(--muted);margin-left:.3em}
+
+    .primary:disabled{opacity:.35;pointer-events:none}
+
+    .searchbox{
+      margin:0 0 48px;
+      padding:0;
+      background:transparent;
+      border:0;
+      box-shadow:none;
+    }
+
+    .section-title{
+      margin:0 0 12px;
+      color:var(--ink);
+      font-family:var(--font-serif);
+      font-size:15px;
+      font-weight:300;
+      line-height:1.4;
+      letter-spacing:.02em;
+    }
+
+    .section-note{
+      margin:0 0 24px;
+      color:var(--sub);
+      font-size:11px;
+      line-height:1.7;
+    }
+
+    .queryrow{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:end;
+      margin-bottom:24px;
+    }
+
+    .query{
+      width:100%;
+      min-height:32px;
+      margin:0;
+      padding:4px 6px;
+      color:var(--ink);
+      -webkit-text-fill-color:var(--ink);
+      background:var(--input-bg);
+      border:1px solid transparent;
+      outline:none;
+      font-size:12px;
+      font-weight:300;
+      line-height:2;
+    }
+
+    .query::placeholder{color:var(--muted)}
+    .query:focus{border-color:var(--line)}
+
+    .filters{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:12px;
+      margin:0;
+    }
+
+    .field{
+      display:grid;
+      gap:4px;
+      min-width:0;
+    }
+
+    .cap{
+      display:block;
+      margin:0;
+      color:var(--sub);
+      font-size:11px;
+      font-weight:300;
+      line-height:1.7;
+      letter-spacing:.01em;
+      text-transform:none;
+    }
+
+    select,
+    .small-input,
+    .key{
+      width:100%;
+      min-width:0;
+      min-height:28px;
+      margin:0;
+      padding:4px 6px;
+      color:var(--ink);
+      -webkit-text-fill-color:var(--ink);
+      background:var(--input-bg);
+      border:1px solid transparent;
+      outline:none;
+      font-size:12px;
+      font-weight:300;
+      line-height:2;
+    }
+
+    select:focus,
+    .small-input:focus,
+    .key:focus{border-color:var(--line)}
+
+    .advanced{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:8px 18px;
+      margin-top:24px;
+      padding-top:12px;
+      border-top:1px solid var(--line-soft);
+    }
+
+    .check{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      color:var(--sub);
+      font-size:11px;
+      font-weight:300;
+      line-height:1.7;
+      user-select:none;
+    }
+
+    .check input{
+      width:12px;
+      height:12px;
+      margin:0;
+      accent-color:var(--ink);
+    }
+
+    .date-range{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      margin-left:auto;
+      color:var(--sub);
+    }
+
+    .date-range .small-input{width:74px}
+
+    .progress{
+      display:none;
+      height:1px;
+      margin-top:12px;
+      overflow:hidden;
+      background:var(--line-soft);
+    }
+
+    .progress.on{display:block}
+
+    .bar{
+      width:28%;
+      height:100%;
+      background:var(--ink);
+      animation:move 1.2s infinite ease-in-out;
+    }
+
+    @keyframes move{
+      0%{transform:translateX(-120%)}
+      100%{transform:translateX(430%)}
+    }
+
+    .quota-line{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:6px;
+      margin-top:8px;
+      color:var(--muted);
+      font-size:10px;
+      font-weight:300;
+      line-height:1.7;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .quota-sep{color:var(--line)}
+
+    .status{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:baseline;
+      min-height:24px;
+      margin:0 0 8px;
+      color:var(--muted);
+      font-size:10px;
+      font-weight:300;
+      line-height:1.7;
+      letter-spacing:.01em;
+      text-transform:none;
+    }
+
+    .status strong{
+      color:var(--ink);
+      font-weight:300;
+    }
+
+    .api-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .dot{
+      width:5px;
+      height:5px;
+      border-radius:50%;
+      background:var(--muted);
+    }
+
+    .api-badge.ready .dot{background:var(--ink)}
+
+    .results{
+      margin:0;
+      border-top:1px solid var(--line-soft);
+    }
+
+    .item{
+      display:grid;
+      grid-template-columns:88px minmax(0,1fr) auto;
+      gap:12px;
+      align-items:baseline;
+      padding:8px 0;
+      border-bottom:1px solid var(--line-soft);
+    }
+
+    .thumb{
+      width:232px;
+      aspect-ratio:16/9;
+      object-fit:cover;
+      background:var(--surface-soft);
+      display:none;
+      border:0;
+      border-radius:0;
+    }
+
+    .showthumbs .thumb{display:block}
+    .showthumbs .item{
+      grid-template-columns:232px minmax(0,1fr) auto;
+      align-items:start;
+    }
+
+    .no-thumbs .item{grid-template-columns:88px minmax(0,1fr) auto}
+    .no-thumbs .thumb{display:none}
+
+    .meta{min-width:0}
+
+    .date{
+      color:var(--sub);
+      font-size:10px;
+      line-height:1.7;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+      margin:0 0 2px;
+    }
+
+    .title{
+      min-width:0;
+      color:var(--ink);
+      font-size:12px;
+      font-weight:300;
+      line-height:1.7;
+      word-break:break-word;
+    }
+
+    .channel,
+    .stats{
+      margin:2px 0 0;
+      color:var(--sub);
+      font-size:10px;
+      line-height:1.7;
+    }
+
+    .channel{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    .actions .copy,
+    .actions .open{
+      min-height:20px;
+      font-size:10px;
+    }
+
+    .empty{
+      padding:24px 0;
+      color:var(--sub);
+      font-size:11px;
+      line-height:1.7;
+    }
+
+    .loadmore{
+      display:block;
+      margin:12px 0 0 auto;
+      min-height:24px;
+    }
+
+    .loadmore::before{content:"[";color:var(--muted);margin-right:.3em}
+    .loadmore::after{content:"]";color:var(--muted);margin-left:.3em}
+
+    .about{
+      margin-top:48px;
+      padding-top:12px;
+      border-top:1px solid var(--line-soft);
+    }
+
+    .about h2{
+      margin:0 0 8px;
+      color:var(--ink);
+      font-family:var(--font-serif);
+      font-size:15px;
+      font-weight:300;
+      line-height:1.4;
+    }
+
+    footer{
+      margin:0;
+      color:var(--sub);
+      font-size:10px;
+      font-weight:300;
+      line-height:1.7;
+    }
+
+    .fixed-meta{
+      position:fixed;
+      z-index:40;
+      bottom:max(12px,env(safe-area-inset-bottom));
+      color:var(--muted);
+      background:transparent;
+      font-family:var(--font-main);
+      font-size:10px;
+      font-weight:300;
+      line-height:1;
+      letter-spacing:.01em;
+      pointer-events:none;
+    }
+
+    .fixed-meta.copyright{
+      left:max(12px,env(safe-area-inset-left));
+    }
+
+    .fixed-meta.version{
+      right:max(12px,env(safe-area-inset-right));
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
+    dialog{
+      border:0;
+      background:transparent;
+      padding:0;
+      max-width:none;
+    }
+
+    dialog::backdrop{
+      background:rgba(17,23,20,.24);
+      backdrop-filter:blur(3px);
+    }
+
+    .modal{
+      width:min(560px,calc(100vw - 28px));
+      background:var(--bg);
+      color:var(--ink);
+      border:1px solid var(--line);
+      border-radius:0;
+      box-shadow:none;
+      padding:18px;
+    }
+
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:baseline;
+      margin-bottom:24px;
+    }
+
+    .modal h2{
+      margin:0;
+      font-family:var(--font-serif);
+      font-size:15px;
+      font-weight:300;
+      line-height:1.4;
+    }
+
+    .modal p{
+      margin:0 0 12px;
+      color:var(--sub);
+      font-size:11px;
+      font-weight:300;
+      line-height:1.7;
+    }
+
+    .keyrow{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:center;
+    }
+
+    .modal-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:12px;
+      margin-top:24px;
+    }
+
+    .notice{
+      margin-top:12px!important;
+      padding:8px 0;
+      background:transparent;
+      border-top:1px solid var(--line-soft);
+      border-bottom:1px solid var(--line-soft);
+      border-radius:0;
+    }
+
+    .err{color:var(--danger)}
+
+    @media(max-width:720px){
+      .shell{padding:24px 14px 64px}
+      .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .advanced{display:grid;grid-template-columns:1fr 1fr}
+      .date-range{grid-column:1/-1;margin-left:0}
+      .queryrow{grid-template-columns:minmax(0,1fr) auto}
+      .no-thumbs .item{
+        grid-template-columns:70px minmax(0,1fr);
+        gap:8px;
+      }
+      .no-thumbs .actions{
+        grid-column:2;
+        justify-content:flex-start;
+      }
+      .showthumbs .item{grid-template-columns:1fr}
+      .showthumbs .thumb{width:100%;max-width:464px}
+      .showthumbs .actions{justify-content:flex-start}
+      .status{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-meta copyright">(C) 2026 SHIRASUSALAD</div>
+  <div class="fixed-meta version">v1.2.1</div>
+
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>＊VAMRSS(YT PLAIN)</h1>
+        <p></p>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="settingsBtn" aria-label="API settings">SETTINGS</button>
+      </div>
+    </header>
+
+    <section class="searchbox">
+      <h2 class="section-title">Plain Search</h2>
+      <p class="section-note">YouTubeの推薦フィードを使わず、タイトル文字列と公開日を中心に検索します。</p>
+
+      <div class="queryrow">
+        <input id="query" class="query" type="search" autocomplete="off" placeholder="Search titles..." aria-label="Search query" />
+        <button id="searchBtn" class="primary">SEARCH</button>
+      </div>
+
+      <div class="filters">
+        <label class="field">
+          <span class="cap">Match</span>
+          <select id="matchMode">
+            <option value="exact">Exact title</option>
+            <option value="contains" selected>Contains</option>
+            <option value="natural">API natural</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="cap">Order</span>
+          <select id="sortMode">
+            <option value="oldest" selected>Oldest</option>
+            <option value="newest">Newest</option>
+            <option value="title">Title</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="cap">Results</span>
+          <select id="resultLimit">
+            <option value="20">20</option>
+            <option value="40" selected>40</option>
+            <option value="80">80</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="cap">Region</span>
+          <select id="region">
+            <option value="" selected>Global</option>
+            <option value="JP">Japan</option>
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="cap">Search Depth</span>
+          <select id="searchDepth">
+            <option value="6" selected>Economy · 6</option>
+            <option value="12">Balanced · 12</option>
+            <option value="24">Deep · 24</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="advanced">
+        <label class="check"><input type="checkbox" id="showViews"> Show views</label>
+        <label class="check"><input type="checkbox" id="normalize" checked> Normalize title</label>
+        <div class="date-range">
+          <span class="cap">Years</span>
+          <input id="yearFrom" class="small-input" type="number" min="2005" max="2100" value="2005" aria-label="From year">
+          <span>–</span>
+          <input id="yearTo" class="small-input" type="number" min="2005" max="2100" aria-label="To year">
+        </div>
+      </div>
+
+      <div class="progress" id="progress"><div class="bar"></div></div>
+      <div class="quota-line">
+        <span>LOCAL SEARCH CALLS TODAY</span>
+        <span id="quotaToday">0</span>
+        <span class="quota-sep">/</span>
+        <span>SOFT LIMIT 80</span>
+      </div>
+    </section>
+
+    <div class="status">
+      <span id="statusLeft"><span class="api-badge" id="apiBadge"><span class="dot"></span><span>API key not set</span></span></span>
+      <span id="statusRight"></span>
+    </div>
+
+    <main id="results" class="results showthumbs">
+      <div class="empty">Enter a title or phrase to search.</div>
+    </main>
+
+    <button id="loadMoreBtn" class="btn loadmore" hidden>LOAD MORE</button>
+
+    <section class="about">
+      <h2>Search Note</h2>
+      <footer>
+        YT Plain uses the YouTube Data API only for search and metadata retrieval. It does not sign in to your YouTube account, read watch history, or use your personal recommendation feed. “Oldest” uses adaptive time-window splitting: sparse searches usually finish in one call, while only saturated periods are divided further. Completed searches are cached on this device for 24 hours. The displayed daily count tracks search.list calls made by this browser only; it is not the authoritative Google Cloud quota total.
+      </footer>
+    </section>
+  </div>
+
+  <dialog id="settings">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>YouTube API</h2>
+        <button class="icon-btn" id="closeSettings" aria-label="Close">CLOSE</button>
+      </div>
+      <p>Paste a YouTube Data API v3 key. The key is used directly from this browser and is never sent anywhere except Google’s API endpoint.</p>
+      <div class="keyrow">
+        <input id="apiKey" class="key" type="password" autocomplete="off" placeholder="AIza..." aria-label="API key" />
+        <button class="btn" id="revealKey">SHOW</button>
+      </div>
+      <label class="check" style="margin-top:8px"><input id="rememberKey" type="checkbox" checked> Save on this device</label>
+      <p class="notice">公開サイトで使う場合は、Google Cloud側でYouTube Data APIとHTTP referrerを制限してください。ローカルの file:// では通常のWebサイト向けreferrer制限を利用できません。</p>
+      <div class="modal-actions">
+        <button class="btn" id="clearKey">CLEAR</button>
+        <button class="primary" id="saveKey">SAVE</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+(() => {
+  const API = 'https://www.googleapis.com/youtube/v3';
+  const $ = (id) => document.getElementById(id);
+
+  const LOCAL_SOFT_LIMIT = 80;
+  const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+  const CACHE_MAX_ENTRIES = 12;
+  const USAGE_KEY = 'ytplain_search_usage_v2';
+  const CACHE_KEY = 'ytplain_result_cache_v2';
+
+  const state = {
+    key: localStorage.getItem('ytplain_api_key') || '',
+    results: [],
+    calls: 0,
+    maxCalls: 6,
+    query: '',
+    nextPageToken: null,
+    lastSimpleParams: null,
+    dailyCalls: 0,
+    usageDate: '',
+    cacheHit: false
+  };
+
+  const nowYear = new Date().getFullYear();
+  $('yearTo').value = nowYear;
+  $('apiKey').value = state.key;
+
+  function pacificDateKey() {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(new Date());
+    const get = type => parts.find(p => p.type === type)?.value || '';
+    return `${get('year')}-${get('month')}-${get('day')}`;
+  }
+
+  function loadUsage() {
+    const today = pacificDateKey();
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(USAGE_KEY) || 'null'); } catch (_) {}
+    if (!saved || saved.date !== today) {
+      saved = {date: today, calls: 0};
+      localStorage.setItem(USAGE_KEY, JSON.stringify(saved));
+    }
+    state.usageDate = today;
+    state.dailyCalls = Number(saved.calls) || 0;
+    updateQuotaDisplay();
+  }
+
+  function recordSearchCall() {
+    const today = pacificDateKey();
+    if (today !== state.usageDate) {
+      state.usageDate = today;
+      state.dailyCalls = 0;
+    }
+    state.dailyCalls += 1;
+    localStorage.setItem(USAGE_KEY, JSON.stringify({date: state.usageDate, calls: state.dailyCalls}));
+    updateQuotaDisplay();
+  }
+
+  function updateQuotaDisplay() {
+    $('quotaToday').textContent = String(state.dailyCalls);
+  }
+
+  function updateApiBadge() {
+    const badge = $('apiBadge');
+    badge.classList.toggle('ready', !!state.key);
+    badge.querySelector('span:last-child').textContent = state.key ? 'API key ready' : 'API key not set';
+  }
+
+  loadUsage();
+  updateApiBadge();
+
+  function normalizeText(s) {
+    let x = String(s || '');
+    if ($('normalize').checked) {
+      x = x.normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+    }
+    return x;
+  }
+
+  function matchesTitle(title, q, mode) {
+    if (mode === 'natural') return true;
+    const a = normalizeText(title);
+    const b = normalizeText(q);
+    return mode === 'exact' ? a === b : a.includes(b);
+  }
+
+  function isoStart(year) { return `${year}-01-01T00:00:00Z`; }
+  function isoEnd(year) { return `${year + 1}-01-01T00:00:00Z`; }
+
+  async function apiGet(path, params) {
+    if (!state.key) throw new Error('API keyを設定してください。');
+    const url = new URL(API + path);
+    Object.entries(params).forEach(([k,v]) => {
+      if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+    });
+    url.searchParams.set('key', state.key);
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data?.error?.message || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  async function searchPage({q, order='date', after, before, pageToken, maxResults=50}) {
+    if (state.calls >= state.maxCalls) {
+      throw new Error(`この検索の上限 ${state.maxCalls} 回に達しました。Search Depthを上げるか、年範囲を狭めてください。`);
+    }
+    if (state.dailyCalls >= LOCAL_SOFT_LIMIT) {
+      throw new Error(`YT Plainのローカル安全上限 ${LOCAL_SOFT_LIMIT} 回/日に達しました。Google Cloud側の実際の残量を確認してください。`);
+    }
+
+    state.calls += 1;
+    recordSearchCall();
+    setStatus(`Searching… ${state.calls}/${state.maxCalls}`, `Local today: ${state.dailyCalls}`);
+
+    const regionCode = $('region').value;
+    return apiGet('/search', {
+      part:'snippet',
+      type:'video',
+      q,
+      order,
+      maxResults,
+      publishedAfter: after,
+      publishedBefore: before,
+      pageToken,
+      regionCode: regionCode || undefined,
+      safeSearch:'none'
+    });
+  }
+
+  function mapItems(items) {
+    return (items || []).map(x => ({
+      id: x.id.videoId,
+      title: x.snippet.title,
+      channel: x.snippet.channelTitle,
+      channelId: x.snippet.channelId,
+      publishedAt: x.snippet.publishedAt,
+      thumbnail: x.snippet.thumbnails?.medium?.url || x.snippet.thumbnails?.default?.url || '',
+      views: null
+    }));
+  }
+
+  function dedupe(items) {
+    const m = new Map();
+    items.forEach(x => x?.id && !m.has(x.id) && m.set(x.id, x));
+    return [...m.values()];
+  }
+
+  async function addStats(items) {
+    if (!$('showViews').checked || !items.length) return items;
+    for (let i=0; i<items.length; i+=50) {
+      const chunk = items.slice(i,i+50);
+      const data = await apiGet('/videos', {
+        part:'statistics',
+        id:chunk.map(x => x.id).join(',')
+      });
+      const stats = new Map((data.items || []).map(x => [x.id, x.statistics]));
+      chunk.forEach(x => {
+        const s = stats.get(x.id);
+        x.views = s?.viewCount != null ? Number(s.viewCount) : null;
+      });
+    }
+    return items;
+  }
+
+  function dateValue(s) { return new Date(s).getTime(); }
+
+  function sortLocal(items, mode) {
+    const out = [...items];
+    if (mode === 'oldest') out.sort((a,b) => dateValue(a.publishedAt)-dateValue(b.publishedAt));
+    if (mode === 'newest') out.sort((a,b) => dateValue(b.publishedAt)-dateValue(a.publishedAt));
+    if (mode === 'title') out.sort((a,b) => normalizeText(a.title).localeCompare(normalizeText(b.title), undefined, {numeric:true}));
+    return out;
+  }
+
+  function cacheKey(params) {
+    return JSON.stringify(params);
+  }
+
+  function loadCacheStore() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function getCached(params) {
+    const key = cacheKey(params);
+    const now = Date.now();
+    const store = loadCacheStore().filter(x => x && now - x.time < CACHE_TTL_MS);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(store));
+    const hit = store.find(x => x.key === key);
+    return hit ? hit.data : null;
+  }
+
+  function saveCached(params, data) {
+    const key = cacheKey(params);
+    const now = Date.now();
+    let store = loadCacheStore().filter(x => x && now - x.time < CACHE_TTL_MS && x.key !== key);
+    store.unshift({key, time: now, data});
+    store = store.slice(0, CACHE_MAX_ENTRIES);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(store)); } catch (_) {}
+  }
+
+  async function simpleSearch(q, sortMode, limit, matchMode, fromYear, toYear, pageToken=null) {
+    const order = sortMode === 'title' ? 'title' : 'date';
+    const params = {
+      q, order,
+      after: isoStart(fromYear),
+      before: isoEnd(toYear),
+      pageToken,
+      maxResults: 50
+    };
+    const data = await searchPage(params);
+    let items = mapItems(data.items).filter(x => matchesTitle(x.title, q, matchMode));
+    items = sortLocal(items, sortMode).slice(0, limit);
+    state.nextPageToken = data.nextPageToken || null;
+    state.lastSimpleParams = {q, sortMode, limit, matchMode, fromYear, toYear};
+    return items;
+  }
+
+  async function efficientOldest(q, limit, matchMode, fromYear, toYear) {
+    const collected = [];
+    const maxRaw = 50;
+    const minSpanMs = 24 * 60 * 60 * 1000;
+
+    async function scanWindow(start, end, depth=0) {
+      if (collected.length >= limit || state.calls >= state.maxCalls) return;
+
+      const data = await searchPage({
+        q,
+        order:'date',
+        after:start.toISOString(),
+        before:end.toISOString(),
+        maxResults:maxRaw
+      });
+
+      const raw = mapItems(data.items);
+      const saturated = raw.length >= maxRaw;
+      const span = end.getTime() - start.getTime();
+
+      if (saturated && span > minSpanMs && depth < 20 && state.calls < state.maxCalls) {
+        const mid = new Date(start.getTime() + Math.floor(span / 2));
+        await scanWindow(start, mid, depth + 1);
+        if (collected.length < limit && state.calls < state.maxCalls) {
+          await scanWindow(mid, end, depth + 1);
+        }
+        return;
+      }
+
+      const matched = raw.filter(x => matchesTitle(x.title, q, matchMode));
+      collected.push(...matched);
+    }
+
+    const start = new Date(isoStart(fromYear));
+    const end = new Date(isoEnd(toYear));
+    await scanWindow(start, end);
+
+    return sortLocal(dedupe(collected), 'oldest').slice(0, limit);
+  }
+
+  async function runSearch() {
+    const q = $('query').value.trim();
+    if (!q) { $('query').focus(); return; }
+    if (!state.key) { $('settings').showModal(); return; }
+
+    const matchMode = $('matchMode').value;
+    const sortMode = $('sortMode').value;
+    const limit = Number($('resultLimit').value);
+    const fromYear = Math.max(2005, Number($('yearFrom').value) || 2005);
+    const toYear = Math.min(nowYear + 1, Number($('yearTo').value) || nowYear);
+    const depth = Number($('searchDepth').value) || 6;
+
+    if (fromYear > toYear) return showError('開始年は終了年以下にしてください。');
+
+    const cacheParams = {
+      q: normalizeText(q),
+      matchMode,
+      sortMode,
+      limit,
+      fromYear,
+      toYear,
+      region: $('region').value,
+      normalize: $('normalize').checked,
+      showViews: $('showViews').checked,
+      depth
+    };
+
+    state.calls = 0;
+    state.maxCalls = sortMode === 'oldest' ? depth : Math.max(2, Math.min(depth, 6));
+    state.results = [];
+    state.query = q;
+    state.nextPageToken = null;
+    state.lastSimpleParams = null;
+    state.cacheHit = false;
+    $('loadMoreBtn').hidden = true;
+    setBusy(true);
+    clearError();
+
+    try {
+      const cached = getCached(cacheParams);
+      if (cached && Array.isArray(cached.results)) {
+        state.results = cached.results;
+        state.nextPageToken = cached.nextPageToken || null;
+        state.lastSimpleParams = cached.lastSimpleParams || null;
+        state.cacheHit = true;
+        render();
+        setStatus(`${state.results.length} results · cache`, `Local today: ${state.dailyCalls}`);
+        $('loadMoreBtn').hidden = !(sortMode !== 'oldest' && state.nextPageToken);
+        return;
+      }
+
+      let items;
+      if (sortMode === 'oldest') {
+        items = await efficientOldest(q, limit, matchMode, fromYear, toYear);
+      } else {
+        items = await simpleSearch(q, sortMode, limit, matchMode, fromYear, toYear);
+      }
+
+      items = await addStats(items);
+      state.results = dedupe(items);
+      render();
+
+      saveCached(cacheParams, {
+        results: state.results,
+        nextPageToken: state.nextPageToken,
+        lastSimpleParams: state.lastSimpleParams
+      });
+
+      const suffix = state.calls === 1 ? '1 search call' : `${state.calls} search calls`;
+      setStatus(`${state.results.length} results`, `${suffix} · local today ${state.dailyCalls}`);
+      $('loadMoreBtn').hidden = !(sortMode !== 'oldest' && state.nextPageToken);
+    } catch (e) {
+      showError(e.message || String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadMore() {
+    if (!state.nextPageToken || !state.lastSimpleParams) return;
+    const p = state.lastSimpleParams;
+
+    state.calls = 0;
+    state.maxCalls = 2;
+    setBusy(true);
+    clearError();
+
+    try {
+      const data = await searchPage({
+        q:p.q,
+        order:p.sortMode === 'title' ? 'title' : 'date',
+        after:isoStart(p.fromYear),
+        before:isoEnd(p.toYear),
+        pageToken:state.nextPageToken,
+        maxResults:50
+      });
+      let items = mapItems(data.items).filter(x => matchesTitle(x.title, p.q, p.matchMode));
+      items = await addStats(items);
+      state.results = sortLocal(dedupe([...state.results, ...items]), p.sortMode);
+      state.nextPageToken = data.nextPageToken || null;
+      render();
+      setStatus(`${state.results.length} results`, `+${state.calls} search call · local today ${state.dailyCalls}`);
+      $('loadMoreBtn').hidden = !state.nextPageToken;
+    } catch(e) {
+      showError(e.message || String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat('ja-JP', {year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+  }
+
+  function formatViews(n) {
+    return n == null ? '' : `${new Intl.NumberFormat('en-US').format(n)} views`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+
+  function render() {
+    const root = $('results');
+    root.className = 'results showthumbs';
+    if (!state.results.length) {
+      root.innerHTML = '<div class="empty">No matching titles found in the scanned range.</div>';
+      return;
+    }
+    root.innerHTML = state.results.map(x => {
+      const url = `https://www.youtube.com/watch?v=${encodeURIComponent(x.id)}`;
+      return `<article class="item">
+        <img class="thumb" src="${escapeHtml(x.thumbnail)}" alt="" loading="lazy">
+        <div class="meta">
+          <div class="date">${escapeHtml(formatDate(x.publishedAt))}</div>
+          <div class="title">${escapeHtml(x.title)}</div>
+          <div class="channel">${escapeHtml(x.channel)}</div>
+          ${$('showViews').checked ? `<div class="stats">${escapeHtml(formatViews(x.views))}</div>` : ''}
+        </div>
+        <div class="actions">
+          <button class="copy" data-url="${escapeHtml(url)}">COPY</button>
+          <button class="open" data-url="${escapeHtml(url)}">OPEN</button>
+        </div>
+      </article>`;
+    }).join('');
+
+    root.querySelectorAll('.open').forEach(btn => btn.addEventListener('click', () => {
+      window.location.href = btn.dataset.url;
+    }));
+    root.querySelectorAll('.copy').forEach(btn => btn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(btn.dataset.url);
+      const old = btn.textContent;
+      btn.textContent = 'COPIED';
+      setTimeout(() => btn.textContent = old, 900);
+    }));
+  }
+
+  function setBusy(on) {
+    $('searchBtn').disabled = on;
+    $('loadMoreBtn').disabled = on;
+    $('progress').classList.toggle('on', on);
+  }
+
+  function setStatus(left, right='') {
+    $('statusLeft').innerHTML = `<strong>${escapeHtml(left)}</strong>`;
+    $('statusRight').textContent = right;
+  }
+
+  function showError(msg) {
+    $('statusLeft').innerHTML = `<span class="err">${escapeHtml(msg)}</span>`;
+    $('statusRight').textContent = `Local today: ${state.dailyCalls}`;
+  }
+
+  function clearError() {}
+
+  $('searchBtn').addEventListener('click', runSearch);
+  $('query').addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+  $('loadMoreBtn').addEventListener('click', loadMore);
+
+  $('settingsBtn').addEventListener('click', () => $('settings').showModal());
+  $('closeSettings').addEventListener('click', () => $('settings').close());
+  $('settings').addEventListener('click', e => {
+    if (e.target === $('settings')) $('settings').close();
+  });
+
+  $('revealKey').addEventListener('click', () => {
+    const inp = $('apiKey');
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    $('revealKey').textContent = show ? 'HIDE' : 'SHOW';
+  });
+
+  $('saveKey').addEventListener('click', () => {
+    state.key = $('apiKey').value.trim();
+    if ($('rememberKey').checked && state.key) localStorage.setItem('ytplain_api_key', state.key);
+    else localStorage.removeItem('ytplain_api_key');
+    updateApiBadge();
+    $('settings').close();
+  });
+
+  $('clearKey').addEventListener('click', () => {
+    state.key = '';
+    $('apiKey').value = '';
+    localStorage.removeItem('ytplain_api_key');
+    updateApiBadge();
+  });
+})();
+</script>
+</body>
+</html>
