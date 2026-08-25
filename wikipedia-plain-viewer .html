@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wikipedia Plain Viewer</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f3f3f3;
+    --panel: #f7f7f7;
+    --text: #2c2c2c;
+    --muted: #8a8a8a;
+    --line: #d9d9d9;
+    --hover: #e9e9e9;
+    --font-size: 12px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", Helvetica, Arial, sans-serif;
+    font-size: var(--font-size);
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, input { font: inherit; }
+
+  .app {
+    width: min(760px, calc(100% - 28px));
+    margin: 0 auto;
+    padding: 18px 0 60px;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    gap: 6px;
+    padding: 10px 0;
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .toolbar-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+
+  .url-input,
+  .search-input {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    padding: 0 9px;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .url-input:focus,
+  .search-input:focus { border-color: #9a9a9a; }
+
+  .load-button,
+  .search-button {
+    height: 30px;
+    padding: 0 12px;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  .load-button:hover,
+  .search-button:hover { background: var(--hover); }
+
+  .load-button:disabled,
+  .search-button:disabled { opacity: .45; cursor: default; }
+
+  .status {
+    min-height: 26px;
+    padding: 9px 0 4px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .article { padding-top: 4px; }
+
+  .article,
+  .article * {
+    font-family: inherit !important;
+    font-size: var(--font-size) !important;
+    line-height: 1.62 !important;
+    letter-spacing: 0 !important;
+  }
+
+  .article h1,
+  .article h2,
+  .article h3,
+  .article h4,
+  .article h5,
+  .article h6 {
+    margin: 1.7em 0 .6em;
+    font-weight: 650;
+  }
+
+  .article > h1:first-child { margin-top: .4em; }
+
+  .article p { margin: 0 0 .78em; }
+  .article ul, .article ol { margin: .45em 0 .85em 1.6em; padding: 0; }
+  .article li { margin: .16em 0; }
+  .article dl { margin: .6em 0; }
+  .article dd { margin-left: 1.6em; }
+
+  .article a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: #bdbdbd;
+    text-underline-offset: 2px;
+  }
+
+  .article a:hover { background: var(--hover); }
+
+  .article table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+  }
+
+  .article th,
+  .article td {
+    padding: 4px 6px;
+    vertical-align: top;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    font-weight: 400;
+  }
+
+  .article th { font-weight: 650; }
+
+  .article blockquote,
+  .article pre {
+    margin: .9em 0;
+    padding-left: 10px;
+    border-left: 1px solid var(--line);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .image-trigger {
+    display: inline-block;
+    margin: 0 2px;
+    padding: 0 3px;
+    color: var(--muted);
+    border-bottom: 1px dotted #aaa;
+    cursor: default;
+    user-select: none;
+  }
+
+  .image-trigger:hover {
+    color: var(--text);
+    background: var(--hover);
+  }
+
+  .image-caption {
+    color: var(--muted);
+  }
+
+  .image-preview {
+    position: fixed;
+    z-index: 9999;
+    display: none;
+    width: 180px;
+    max-height: 180px;
+    padding: 4px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 8px 22px rgba(0,0,0,.10);
+    pointer-events: none;
+  }
+
+  .image-preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 170px;
+    object-fit: contain;
+    background: #fff;
+  }
+
+  .search-results {
+    padding-top: 4px;
+  }
+
+  .search-result {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+  }
+
+  .search-result:hover { background: var(--hover); }
+
+  .search-result-title {
+    font-weight: 650;
+  }
+
+  .search-result-snippet {
+    margin-top: 2px;
+    color: var(--muted);
+  }
+
+  .empty {
+    padding-top: 20vh;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .error { color: #7a3232; }
+
+  /* Wikipedia由来の補助要素を簡略化 */
+  .mw-editsection,
+  .navbox,
+  .vertical-navbox,
+  .metadata,
+  .ambox,
+  .sistersitebox,
+  .authority-control,
+  .printfooter,
+  .catlinks,
+  .noprint,
+  .shortdescription,
+  .hatnote .mw-editsection,
+  style,
+  script,
+  noscript,
+  video,
+  audio,
+  source,
+  iframe,
+  canvas,
+  svg {
+    display: none !important;
+  }
+
+  @media (max-width: 620px) {
+    .app { width: calc(100% - 20px); padding-top: 8px; }
+  }
+</style>
+</head>
+<body>
+  <main class="app">
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <input
+          id="urlInput"
+          class="url-input"
+          type="url"
+          inputmode="url"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Wikipedia の記事URLを貼り付け"
+          aria-label="Wikipedia URL"
+        />
+        <button id="loadButton" class="load-button" type="button">表示</button>
+      </div>
+      <div class="toolbar-row">
+        <input
+          id="searchInput"
+          class="search-input"
+          type="search"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Wikipedia を検索"
+          aria-label="Wikipedia 検索"
+        />
+        <button id="searchButton" class="search-button" type="button">検索</button>
+      </div>
+    </div>
+
+    <div id="status" class="status">URLを貼り付けるか、Wikipediaを検索</div>
+    <article id="article" class="article">
+      <div class="empty">Wikipedia Plain Viewer</div>
+    </article>
+  </main>
+
+  <div id="imagePreview" class="image-preview" aria-hidden="true">
+    <img id="previewImage" alt="" />
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  const urlInput = document.getElementById('urlInput');
+  const loadButton = document.getElementById('loadButton');
+  const searchInput = document.getElementById('searchInput');
+  const searchButton = document.getElementById('searchButton');
+  const status = document.getElementById('status');
+  const article = document.getElementById('article');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImage = document.getElementById('previewImage');
+
+  let currentWikiHost = '';
+
+  function setStatus(message, isError = false) {
+    status.textContent = message;
+    status.classList.toggle('error', isError);
+  }
+
+  function normalizeWikipediaUrl(value) {
+    const raw = value.trim();
+    if (!raw) throw new Error('Wikipedia の記事URLを入力してください。');
+
+    let url;
+    try {
+      url = new URL(raw);
+    } catch {
+      throw new Error('URLの形式を確認してください。');
+    }
+
+    const host = url.hostname.toLowerCase();
+    if (!/(^|\.)wikipedia\.org$/.test(host)) {
+      throw new Error('wikipedia.org の記事URLを入力してください。');
+    }
+
+    const normalizedHost = host.replace('.m.wikipedia.org', '.wikipedia.org');
+    const match = url.pathname.match(/^\/wiki\/(.+)$/);
+    if (!match) throw new Error('Wikipedia の記事ページURLを入力してください。');
+
+    const title = decodeURIComponent(match[1]).replace(/_/g, ' ');
+    if (!title) throw new Error('記事名を取得できませんでした。');
+
+    return { host: normalizedHost, title };
+  }
+
+  function absoluteUrl(value, host) {
+    if (!value) return '';
+    if (value.startsWith('//')) return 'https:' + value;
+    try { return new URL(value, `https://${host}`).href; }
+    catch { return ''; }
+  }
+
+  function bestImageUrl(img, host) {
+    const srcset = img.getAttribute('srcset');
+    if (srcset) {
+      const candidates = srcset.split(',').map(part => part.trim().split(/\s+/)[0]).filter(Boolean);
+      if (candidates.length) return absoluteUrl(candidates[candidates.length - 1], host);
+    }
+    return absoluteUrl(img.getAttribute('src') || img.dataset.src || '', host);
+  }
+
+  function positionPreview(event) {
+    const pad = 14;
+    const boxW = 190;
+    const boxH = 190;
+    let x = event.clientX + pad;
+    let y = event.clientY + pad;
+
+    if (x + boxW > window.innerWidth) x = event.clientX - boxW - pad;
+    if (y + boxH > window.innerHeight) y = event.clientY - boxH - pad;
+
+    imagePreview.style.left = Math.max(6, x) + 'px';
+    imagePreview.style.top = Math.max(6, y) + 'px';
+  }
+
+  function makeImageTrigger(src, alt = '') {
+    const trigger = document.createElement('span');
+    trigger.className = 'image-trigger';
+    trigger.textContent = '画像';
+    trigger.tabIndex = 0;
+    if (alt) trigger.setAttribute('aria-label', `画像: ${alt}`);
+
+    const show = (event) => {
+      if (!src) return;
+      previewImage.src = src;
+      previewImage.alt = alt;
+      imagePreview.style.display = 'block';
+      imagePreview.setAttribute('aria-hidden', 'false');
+      if (event.clientX != null) positionPreview(event);
+      else {
+        const rect = trigger.getBoundingClientRect();
+        imagePreview.style.left = Math.min(window.innerWidth - 196, rect.right + 8) + 'px';
+        imagePreview.style.top = Math.min(window.innerHeight - 196, rect.bottom + 8) + 'px';
+      }
+    };
+
+    const hide = () => {
+      imagePreview.style.display = 'none';
+      imagePreview.setAttribute('aria-hidden', 'true');
+      previewImage.removeAttribute('src');
+    };
+
+    trigger.addEventListener('mouseenter', show);
+    trigger.addEventListener('mousemove', positionPreview);
+    trigger.addEventListener('mouseleave', hide);
+    trigger.addEventListener('focus', show);
+    trigger.addEventListener('blur', hide);
+
+    return trigger;
+  }
+
+  function simplifyWikipediaHtml(html, host, title) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div id="root">${html}</div>`, 'text/html');
+    const root = doc.getElementById('root');
+
+    root.querySelectorAll('script, style, noscript, iframe, video, audio, source, canvas, svg').forEach(el => el.remove());
+    root.querySelectorAll('.mw-editsection, .navbox, .vertical-navbox, .metadata, .ambox, .sistersitebox, .authority-control, .printfooter, .catlinks, .noprint, .shortdescription').forEach(el => el.remove());
+
+    // Figure内の画像は「画像」+ 最小限のキャプションに置換。
+    root.querySelectorAll('figure').forEach(figure => {
+      const img = figure.querySelector('img');
+      if (!img) return;
+
+      const src = bestImageUrl(img, host);
+      const alt = img.getAttribute('alt') || '';
+      const captionText = (figure.querySelector('figcaption')?.textContent || '').trim();
+
+      const wrap = doc.createElement('span');
+      wrap.appendChild(makeImageTrigger(src, alt));
+      if (captionText) {
+        const caption = doc.createElement('span');
+        caption.className = 'image-caption';
+        caption.textContent = ` ${captionText}`;
+        wrap.appendChild(caption);
+      }
+      figure.replaceWith(wrap);
+    });
+
+    // Figure外の残り画像も「画像」に置換。
+    root.querySelectorAll('img').forEach(img => {
+      const src = bestImageUrl(img, host);
+      const alt = img.getAttribute('alt') || '';
+      const link = img.closest('a');
+      const trigger = makeImageTrigger(src, alt);
+      if (link && link.childNodes.length === 1) link.replaceWith(trigger);
+      else img.replaceWith(trigger);
+    });
+
+    // 内部リンクを正規化。Wikipedia記事リンクはこのビューアー内で開く。
+    root.querySelectorAll('a[href]').forEach(a => {
+      const href = a.getAttribute('href');
+      if (!href) return;
+
+      const absolute = absoluteUrl(href, host);
+      if (!absolute) {
+        a.removeAttribute('href');
+        return;
+      }
+
+      try {
+        const u = new URL(absolute);
+        if (u.hostname === host && u.pathname.startsWith('/wiki/') && !u.pathname.includes(':')) {
+          a.href = absolute;
+          a.addEventListener('click', (event) => {
+            event.preventDefault();
+            urlInput.value = absolute;
+            loadArticle();
+          });
+        } else {
+          a.href = absolute;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        }
+      } catch {
+        a.removeAttribute('href');
+      }
+    });
+
+    // Wikipedia固有のstyle属性を除去。
+    root.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+    root.querySelectorAll('[width], [height], [align], [bgcolor]').forEach(el => {
+      el.removeAttribute('width');
+      el.removeAttribute('height');
+      el.removeAttribute('align');
+      el.removeAttribute('bgcolor');
+    });
+
+    const titleEl = doc.createElement('h1');
+    titleEl.textContent = title;
+    root.prepend(titleEl);
+
+    return Array.from(root.childNodes);
+  }
+
+  function stripHtml(value) {
+    const temp = document.createElement('div');
+    temp.innerHTML = value || '';
+    return (temp.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function articleUrl(host, title) {
+    return `https://${host}/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
+  }
+
+  async function searchWikipedia() {
+    const query = searchInput.value.trim();
+    if (!query) {
+      setStatus('検索語を入力してください。', true);
+      searchInput.focus();
+      return;
+    }
+
+    const host = currentWikiHost || 'ja.wikipedia.org';
+    searchButton.disabled = true;
+    loadButton.disabled = true;
+    searchInput.disabled = true;
+    setStatus(`「${query}」を検索中…`);
+    article.innerHTML = '';
+
+    const endpoint = new URL(`https://${host}/w/api.php`);
+    endpoint.searchParams.set('action', 'query');
+    endpoint.searchParams.set('list', 'search');
+    endpoint.searchParams.set('srsearch', query);
+    endpoint.searchParams.set('srlimit', '20');
+    endpoint.searchParams.set('format', 'json');
+    endpoint.searchParams.set('formatversion', '2');
+    endpoint.searchParams.set('origin', '*');
+
+    try {
+      const response = await fetch(endpoint.href, { method: 'GET', mode: 'cors' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.info || 'Wikipedia API error');
+
+      const results = data.query?.search || [];
+      if (!results.length) {
+        article.innerHTML = '<div class="empty">検索結果がありません。</div>';
+        setStatus(`「${query}」 / 0件 / ${host}`);
+        return;
+      }
+
+      const wrap = document.createElement('div');
+      wrap.className = 'search-results';
+
+      results.forEach(result => {
+        const item = document.createElement('div');
+        item.className = 'search-result';
+        item.tabIndex = 0;
+
+        const title = document.createElement('div');
+        title.className = 'search-result-title';
+        title.textContent = result.title;
+
+        const snippet = document.createElement('div');
+        snippet.className = 'search-result-snippet';
+        snippet.textContent = stripHtml(result.snippet);
+
+        const openResult = () => {
+          urlInput.value = articleUrl(host, result.title);
+          loadArticle();
+        };
+
+        item.addEventListener('click', openResult);
+        item.addEventListener('keydown', event => {
+          if (event.key === 'Enter') openResult();
+        });
+
+        item.append(title, snippet);
+        wrap.appendChild(item);
+      });
+
+      article.appendChild(wrap);
+      document.title = `${query} — Wikipedia Search`;
+      setStatus(`「${query}」 / ${results.length}件 / ${host}`);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } catch (error) {
+      console.error(error);
+      article.innerHTML = '<div class="empty error">検索できませんでした。</div>';
+      setStatus('検索に失敗しました。通信環境またはWikipedia側の状態を確認してください。', true);
+    } finally {
+      searchButton.disabled = false;
+      loadButton.disabled = false;
+      searchInput.disabled = false;
+      searchInput.focus();
+    }
+  }
+
+  async function loadArticle() {
+    let parsed;
+    try {
+      parsed = normalizeWikipediaUrl(urlInput.value);
+    } catch (error) {
+      article.innerHTML = '<div class="empty">Wikipedia Plain Viewer</div>';
+      setStatus(error.message, true);
+      return;
+    }
+
+    currentWikiHost = parsed.host;
+    loadButton.disabled = true;
+    searchButton.disabled = true;
+    urlInput.disabled = true;
+    setStatus('読み込み中…');
+    article.innerHTML = '';
+
+    const endpoint = new URL(`https://${parsed.host}/w/api.php`);
+    endpoint.searchParams.set('action', 'parse');
+    endpoint.searchParams.set('page', parsed.title);
+    endpoint.searchParams.set('prop', 'text|displaytitle');
+    endpoint.searchParams.set('format', 'json');
+    endpoint.searchParams.set('formatversion', '2');
+    endpoint.searchParams.set('origin', '*');
+    endpoint.searchParams.set('redirects', '1');
+
+    try {
+      const response = await fetch(endpoint.href, { method: 'GET', mode: 'cors' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.info || 'Wikipedia API error');
+      if (!data.parse?.text) throw new Error('記事本文を取得できませんでした。');
+
+      const fragment = document.createDocumentFragment();
+      const nodes = simplifyWikipediaHtml(data.parse.text, parsed.host, data.parse.title || parsed.title);
+      nodes.forEach(node => fragment.appendChild(node));
+      article.appendChild(fragment);
+
+      document.title = `${data.parse.title || parsed.title} — Wikipedia Plain Viewer`;
+      setStatus(`${data.parse.title || parsed.title} / ${parsed.host}`);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } catch (error) {
+      console.error(error);
+      article.innerHTML = '<div class="empty error">記事を読み込めませんでした。</div>';
+      setStatus('取得に失敗しました。URL、通信環境、Wikipedia側の状態を確認してください。', true);
+    } finally {
+      loadButton.disabled = false;
+      searchButton.disabled = false;
+      urlInput.disabled = false;
+      urlInput.focus();
+    }
+  }
+
+  loadButton.addEventListener('click', loadArticle);
+  searchButton.addEventListener('click', searchWikipedia);
+
+  urlInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') loadArticle();
+  });
+
+  searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') searchWikipedia();
+  });
+
+  // URLパラメータ ?url=... からの自動読込にも対応。
+  const params = new URLSearchParams(location.search);
+  const initialUrl = params.get('url');
+  if (initialUrl) {
+    urlInput.value = initialUrl;
+    loadArticle();
+  }
+})();
+</script>
+</body>
+</html>
