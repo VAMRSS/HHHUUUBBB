@@ -128,11 +128,17 @@
       padding: 1px 0;
     }
 
-    .app-name {
+    .app-info {
       min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      display: flex;
+      align-items: baseline;
+      gap: .7em;
       white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .app-name {
+      flex: 0 0 auto;
       color: var(--ink);
       text-decoration: none;
     }
@@ -142,6 +148,16 @@
       text-decoration: underline;
       text-underline-offset: 2px;
       outline: none;
+    }
+
+    .app-description {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0;
     }
 
     .actions {
@@ -168,6 +184,8 @@
     @media (max-width: 420px) {
       .topbar { column-gap: 12px; }
       .app-row { gap: .7em; }
+      .app-info { gap: .55em; }
+      .app-description { font-size: 9px; }
     }
   </style>
 </head>
@@ -191,24 +209,28 @@
     const APPS = [
       {
         name: 'MEMOTIMER',
+        description: 'メモ＋残り時間を隠せるタイマー',
         openUrl: 'https://vamrss.github.io/memotimer/',
         htmlUrl: 'https://raw.githubusercontent.com/VAMRSS/memotimer/main/index.html',
         fileName: 'memotimer.html'
       },
       {
         name: 'MICRO BUSINESS BOARD',
+        description: '小規模事業の進捗・収支管理',
         openUrl: './micro-business-board-v0.1.html',
         htmlUrl: './micro-business-board-v0.1.html',
         fileName: 'micro-business-board-v0.1.html'
       },
       {
         name: 'YT PLAIN',
+        description: 'YouTubeを推薦に頼らず検索',
         openUrl: './yt-plain-wsv-v1.2.1.html',
         htmlUrl: './yt-plain-wsv-v1.2.1.html',
         fileName: 'yt-plain-wsv-v1.2.1.html'
       },
       {
         name: 'PDF → JPEG',
+        description: 'PDF一括変換・回転・黒塗り',
         openUrl: './pdf-to-jpeg-batch-v6.html',
         htmlUrl: './pdf-to-jpeg-batch-v6.html',
         fileName: 'pdf-to-jpeg-batch-v6.html'
@@ -241,12 +263,21 @@
       const row = document.createElement('div');
       row.className = 'app-row';
 
+      const info = document.createElement('span');
+      info.className = 'app-info';
+
       const name = document.createElement('a');
       name.className = 'app-name';
       name.href = app.openUrl;
       name.target = '_blank';
       name.rel = 'noopener noreferrer';
       name.textContent = app.name;
+
+      const description = document.createElement('span');
+      description.className = 'app-description';
+      description.textContent = app.description;
+
+      info.append(name, description);
 
       const actions = document.createElement('span');
       actions.className = 'actions';
@@ -259,7 +290,7 @@
       download.addEventListener('click', () => downloadHtml(app));
 
       actions.append(download);
-      row.append(name, actions);
+      row.append(info, actions);
       return row;
     }
 
