@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8f9f9">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="A minimal memo and hidden countdown timer by VAMRSS.">
+  <title>MEMOTIME — VAMRSS</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="mask-icon" href="favicon.svg" color="#111714">
+
+  <style>
+    /*
+      VAMRSS MEMOTIME
+      VAMRSS Interface Language v1.3 implementation
+      v1.2.0 — interface-language alignment
+    */
+
+    :root {
+      --bg: #f8f9f9;
+      --ink: #111714;
+      --sub: #68736f;
+      --muted: #9aa5a1;
+      --line: #d9ddda;
+      --line-soft: rgba(17, 23, 20, 0.12);
+      --surface: #ffffff;
+      --surface-soft: rgba(104, 115, 111, 0.08);
+      --input-bg: rgba(96, 112, 132, 0.10);
+      --danger: #9b3144;
+
+      --font-main: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", Meiryo, sans-serif;
+      --font-serif: Georgia, "Times New Roman", "Yu Mincho", "Hiragino Mincho ProN", serif;
+
+      --page-max: 980px;
+      --page-pad-x: 18px;
+      --page-pad-top: 24px;
+      --page-pad-bottom: 48px;
+
+      --gap-xs: 4px;
+      --gap-s: 8px;
+      --gap-m: 12px;
+      --gap-l: 24px;
+      --gap-xl: 48px;
+
+      --fz-note: 10px;
+      --fz-caption: 11px;
+      --fz-body: 12px;
+      --fz-section: 15px;
+
+      --lh-body: 2;
+      --lh-note: 1.7;
+      --weight: 300;
+      --letter: 0.01em;
+      --letter-nav: 0.09em;
+
+      --input-min-height: 28px;
+      --input-pad-y: 4px;
+      --input-pad-x: 6px;
+      --transition: 120ms ease;
+
+      --fixed-footer-bottom: 12px;
+      --fixed-footer-x: 12px;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #101312;
+      --ink: #edf1ef;
+      --sub: #a4aeaa;
+      --muted: #707b77;
+      --line: #2f3834;
+      --line-soft: rgba(237, 241, 239, 0.12);
+      --surface: #151a18;
+      --surface-soft: rgba(237, 241, 239, 0.06);
+      --input-bg: rgba(237, 241, 239, 0.08);
+      --danger: #e28a9a;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-main);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      letter-spacing: var(--letter);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+      letter-spacing: inherit;
+      border-radius: 0;
+    }
+
+    button { cursor: pointer; }
+
+    :focus-visible {
+      outline: 1px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    .app {
+      width: min(100%, var(--page-max));
+      margin: 0 auto;
+      padding: var(--page-pad-top) var(--page-pad-x) 84px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--gap-s);
+      align-items: start;
+      margin: 0 0 var(--gap-xl);
+    }
+
+    .site-title {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font-main);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      letter-spacing: var(--letter);
+    }
+
+    .site-title-text {
+      display: inline-block;
+      color: inherit;
+      white-space: nowrap;
+    }
+
+    .text-nav,
+    .button-row,
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--gap-s);
+      min-width: 0;
+    }
+
+    .text-nav,
+    .modal-actions { justify-content: flex-end; }
+
+    .text-button {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .35em;
+      margin: 0;
+      padding: 0;
+      min-height: 24px;
+      border: 0;
+      background: transparent;
+      color: var(--sub);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: color var(--transition), opacity var(--transition);
+    }
+
+    .text-button:hover,
+    .text-button.selected,
+    .text-button.active { color: var(--ink); }
+
+    .text-button.danger { color: var(--danger); }
+    .text-button[disabled] { opacity: .35; pointer-events: none; }
+    .text-button.bracket::before { content: "["; color: var(--muted); }
+    .text-button.bracket::after { content: "]"; color: var(--muted); }
+
+    .section {
+      margin: 0 0 var(--gap-xl);
+      padding: 0;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--gap-m);
+      align-items: baseline;
+      min-height: 24px;
+      margin: 0 0 var(--gap-m);
+    }
+
+    .section-title {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: var(--fz-section);
+      font-weight: var(--weight);
+      line-height: 1.4;
+      letter-spacing: .02em;
+    }
+
+    .status {
+      min-height: 1em;
+      color: var(--muted);
+      font-size: var(--fz-note);
+      font-weight: var(--weight);
+      line-height: var(--lh-note);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .memo {
+      width: 100%;
+      min-height: min(48vh, 440px);
+      margin: 0;
+      padding: var(--gap-m);
+      color: var(--ink);
+      -webkit-text-fill-color: var(--ink);
+      background: var(--input-bg);
+      border: 1px solid transparent;
+      outline: none;
+      resize: vertical;
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      letter-spacing: var(--letter);
+    }
+
+    .memo:focus { border-color: var(--line); }
+    .memo::placeholder { color: var(--muted); opacity: 1; }
+
+    .hint {
+      margin: var(--gap-s) 0 0;
+      color: var(--sub);
+      font-size: var(--fz-caption);
+      font-weight: var(--weight);
+      line-height: var(--lh-note);
+    }
+
+    .timer-grid {
+      display: grid;
+      grid-template-columns: 88px 88px 88px minmax(0, 1fr);
+      gap: var(--gap-s);
+      align-items: end;
+      padding-top: var(--gap-m);
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--gap-xs);
+      min-width: 0;
+    }
+
+    label {
+      color: var(--sub);
+      font-size: var(--fz-caption);
+      font-weight: var(--weight);
+      line-height: var(--lh-note);
+      letter-spacing: var(--letter);
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      min-height: var(--input-min-height);
+      margin: 0;
+      padding: var(--input-pad-y) var(--input-pad-x);
+      color: var(--ink);
+      -webkit-text-fill-color: var(--ink);
+      background: var(--input-bg);
+      border: 1px solid transparent;
+      outline: none;
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input:focus { border-color: var(--line); }
+
+    .timer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      min-height: var(--input-min-height);
+    }
+
+    .running-state,
+    .done-state {
+      display: none;
+      padding-top: var(--gap-m);
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .running-state.active,
+    .done-state.active {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: baseline;
+      gap: var(--gap-m);
+    }
+
+    .state-copy {
+      margin: 0;
+      color: var(--sub);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+    }
+
+    .state-label {
+      display: block;
+      margin-bottom: var(--gap-xs);
+      color: var(--muted);
+      font-size: var(--fz-note);
+      line-height: var(--lh-note);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+    }
+
+    .time-up {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: var(--fz-section);
+      font-weight: var(--weight);
+      line-height: 1.4;
+      letter-spacing: .02em;
+    }
+
+    .fixed-meta {
+      position: fixed;
+      z-index: 50;
+      bottom: max(var(--fixed-footer-bottom), env(safe-area-inset-bottom));
+      color: var(--muted);
+      background: transparent;
+      font-family: var(--font-main);
+      font-size: var(--fz-note);
+      font-weight: var(--weight);
+      line-height: 1;
+      letter-spacing: var(--letter);
+      pointer-events: none;
+    }
+
+    .fixed-meta.copyright {
+      left: max(var(--fixed-footer-x), env(safe-area-inset-left));
+    }
+
+    .fixed-meta.version {
+      right: max(var(--fixed-footer-x), env(safe-area-inset-right));
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    dialog {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      max-width: none;
+      color: var(--ink);
+    }
+
+    dialog::backdrop {
+      background: rgba(17, 23, 20, .24);
+      backdrop-filter: blur(3px);
+    }
+
+    .modal {
+      width: min(420px, calc(100vw - 28px));
+      background: var(--bg);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 18px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--gap-m);
+      align-items: baseline;
+      margin-bottom: var(--gap-l);
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: var(--fz-section);
+      font-weight: var(--weight);
+      line-height: 1.4;
+      letter-spacing: .02em;
+    }
+
+    .modal-copy {
+      margin: 0;
+      color: var(--sub);
+      font-size: var(--fz-caption);
+      font-weight: var(--weight);
+      line-height: var(--lh-note);
+    }
+
+    .modal-actions { margin-top: var(--gap-l); }
+
+    @media (max-width: 720px) {
+      :root { --page-pad-x: 14px; }
+
+      .topbar { margin-bottom: var(--gap-l); }
+
+      .timer-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .timer-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+
+      .memo { min-height: 44vh; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: .001ms !important;
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-meta copyright">(C) 2026 SHIRASUSALAD</div>
+  <div class="fixed-meta version">v1.2.0</div>
+
+  <main class="app">
+    <header class="topbar">
+      <h1 class="site-title"><span class="site-title-text">＊VAMRSS(MEMOTIME)</span></h1>
+      <nav class="text-nav" aria-label="Application actions">
+        <button id="clearButton" class="text-button danger" type="button">CLEAR</button>
+        <button id="themeButton" class="text-button bracket" type="button">DARK</button>
+      </nav>
+    </header>
+
+    <section class="section" aria-labelledby="memoTitle">
+      <div class="section-head">
+        <h2 id="memoTitle" class="section-title">Memo</h2>
+        <div id="memoStatus" class="status" aria-live="polite"></div>
+      </div>
+
+      <textarea
+        id="memo"
+        class="memo"
+        spellcheck="false"
+        placeholder="Type here."
+        aria-label="Memo"
+      ></textarea>
+      <p class="hint">Click the memo area to copy all text as plain text.</p>
+    </section>
+
+    <section class="section" aria-labelledby="timerTitle">
+      <div class="section-head">
+        <h2 id="timerTitle" class="section-title">Timer</h2>
+      </div>
+
+      <div id="timerControls" class="timer-grid">
+        <div class="field">
+          <label for="hours">HOUR</label>
+          <input id="hours" type="number" min="0" max="99" value="0" inputmode="numeric" aria-label="Hours">
+        </div>
+        <div class="field">
+          <label for="minutes">MIN</label>
+          <input id="minutes" type="number" min="0" max="59" value="25" inputmode="numeric" aria-label="Minutes">
+        </div>
+        <div class="field">
+          <label for="seconds">SEC</label>
+          <input id="seconds" type="number" min="0" max="59" value="0" inputmode="numeric" aria-label="Seconds">
+        </div>
+        <div class="timer-actions">
+          <button id="startButton" class="text-button bracket active" type="button">START</button>
+        </div>
+      </div>
+
+      <div id="runningState" class="running-state" aria-live="polite">
+        <p class="state-copy"><span class="state-label">Running</span>Remaining time hidden.</p>
+        <button id="stopButton" class="text-button bracket" type="button">STOP</button>
+      </div>
+
+      <div id="doneState" class="done-state" aria-live="assertive">
+        <p class="time-up"><span class="state-label">Complete</span>Time up.</p>
+        <button id="resetButton" class="text-button bracket" type="button">RESET</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="clearDialog" aria-labelledby="clearDialogTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="clearDialogTitle">Clear memo</h2>
+        <button id="closeDialogButton" class="text-button" type="button">CLOSE</button>
+      </div>
+      <p class="modal-copy">Delete all text stored in this memo on this device?</p>
+      <div class="modal-actions">
+        <button id="cancelClearButton" class="text-button" type="button">CANCEL</button>
+        <button id="confirmClearButton" class="text-button danger" type="button">CLEAR</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const themeMeta = document.querySelector('meta[name="theme-color"]');
+      const themeButton = document.getElementById('themeButton');
+
+      const memo = document.getElementById('memo');
+      const memoStatus = document.getElementById('memoStatus');
+      const clearButton = document.getElementById('clearButton');
+      const clearDialog = document.getElementById('clearDialog');
+      const closeDialogButton = document.getElementById('closeDialogButton');
+      const cancelClearButton = document.getElementById('cancelClearButton');
+      const confirmClearButton = document.getElementById('confirmClearButton');
+
+      const hours = document.getElementById('hours');
+      const minutes = document.getElementById('minutes');
+      const seconds = document.getElementById('seconds');
+
+      const timerControls = document.getElementById('timerControls');
+      const runningState = document.getElementById('runningState');
+      const doneState = document.getElementById('doneState');
+      const startButton = document.getElementById('startButton');
+      const stopButton = document.getElementById('stopButton');
+      const resetButton = document.getElementById('resetButton');
+
+      let endAt = null;
+      let timerId = null;
+      let statusId = null;
+      let audioContext = null;
+
+      memo.value = localStorage.getItem('memotime.memo') || '';
+      hours.value = localStorage.getItem('memotime.hours') ?? '0';
+      minutes.value = localStorage.getItem('memotime.minutes') ?? '25';
+      seconds.value = localStorage.getItem('memotime.seconds') ?? '0';
+
+      const savedTheme = localStorage.getItem('memotime.theme');
+      const preferredTheme = savedTheme === 'dark' || savedTheme === 'light'
+        ? savedTheme
+        : 'light';
+      setTheme(preferredTheme, false);
+
+      function setTheme(theme, persist = true) {
+        root.dataset.theme = theme;
+        themeButton.textContent = theme === 'light' ? 'DARK' : 'LIGHT';
+        themeMeta.setAttribute('content', theme === 'light' ? '#f8f9f9' : '#101312');
+        if (persist) localStorage.setItem('memotime.theme', theme);
+      }
+
+      themeButton.addEventListener('click', () => {
+        setTheme(root.dataset.theme === 'light' ? 'dark' : 'light');
+      });
+
+      memo.addEventListener('input', () => {
+        localStorage.setItem('memotime.memo', memo.value);
+      });
+
+      memo.addEventListener('click', copyMemo);
+
+      clearButton.addEventListener('click', () => {
+        if (!memo.value) {
+          showMemoStatus('EMPTY');
+          return;
+        }
+        clearDialog.showModal();
+      });
+
+      closeDialogButton.addEventListener('click', () => clearDialog.close());
+      cancelClearButton.addEventListener('click', () => clearDialog.close());
+      confirmClearButton.addEventListener('click', () => {
+        memo.value = '';
+        localStorage.removeItem('memotime.memo');
+        clearDialog.close();
+        showMemoStatus('CLEARED');
+        memo.focus();
+      });
+
+      clearDialog.addEventListener('click', event => {
+        if (event.target === clearDialog) clearDialog.close();
+      });
+
+      [hours, minutes, seconds].forEach(input => {
+        input.addEventListener('change', () => {
+          sanitizeTimeFields();
+          saveTimerSettings();
+        });
+      });
+
+      function saveTimerSettings() {
+        localStorage.setItem('memotime.hours', hours.value);
+        localStorage.setItem('memotime.minutes', minutes.value);
+        localStorage.setItem('memotime.seconds', seconds.value);
+      }
+
+      function sanitizeTimeFields() {
+        hours.value = clampInt(hours.value, 0, 99);
+        minutes.value = clampInt(minutes.value, 0, 59);
+        seconds.value = clampInt(seconds.value, 0, 59);
+      }
+
+      function clampInt(value, min, max) {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isNaN(parsed)) return min;
+        return Math.min(max, Math.max(min, parsed));
+      }
+
+      async function copyMemo() {
+        const text = memo.value;
+        if (!text) {
+          showMemoStatus('EMPTY');
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(text);
+          showMemoStatus('COPIED');
+        } catch (_) {
+          const selectionStart = memo.selectionStart;
+          const selectionEnd = memo.selectionEnd;
+          memo.select();
+          const copied = document.execCommand('copy');
+          memo.setSelectionRange(selectionStart, selectionEnd);
+          if (copied) showMemoStatus('COPIED');
+        }
+      }
+
+      function showMemoStatus(message) {
+        clearTimeout(statusId);
+        memoStatus.textContent = message;
+        statusId = setTimeout(() => {
+          memoStatus.textContent = '';
+        }, 900);
+      }
+
+      function getDurationMs() {
+        sanitizeTimeFields();
+        saveTimerSettings();
+        return ((Number(hours.value) * 3600) + (Number(minutes.value) * 60) + Number(seconds.value)) * 1000;
+      }
+
+      startButton.addEventListener('click', () => {
+        const duration = getDurationMs();
+        if (duration <= 0) return;
+
+        prepareAudio();
+        endAt = Date.now() + duration;
+        timerControls.style.display = 'none';
+        doneState.classList.remove('active');
+        runningState.classList.add('active');
+
+        clearInterval(timerId);
+        timerId = setInterval(checkTimer, 250);
+        checkTimer();
+      });
+
+      stopButton.addEventListener('click', () => resetTimer(false));
+      resetButton.addEventListener('click', () => resetTimer(true));
+
+      function resetTimer(fromDone) {
+        clearInterval(timerId);
+        timerId = null;
+        endAt = null;
+        runningState.classList.remove('active');
+        doneState.classList.remove('active');
+        timerControls.style.display = '';
+        if (fromDone) startButton.focus();
+      }
+
+      function checkTimer() {
+        if (endAt === null || Date.now() < endAt) return;
+
+        clearInterval(timerId);
+        timerId = null;
+        endAt = null;
+        runningState.classList.remove('active');
+        doneState.classList.add('active');
+        beep();
+
+        if ('vibrate' in navigator) {
+          navigator.vibrate([180, 80, 180]);
+        }
+      }
+
+      function prepareAudio() {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!audioContext) audioContext = new AudioContextClass();
+          if (audioContext.state === 'suspended') audioContext.resume();
+        } catch (_) {}
+      }
+
+      function beep() {
+        try {
+          if (!audioContext) return;
+          const now = audioContext.currentTime;
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(880, now);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.72);
+
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start(now);
+          oscillator.stop(now + 0.74);
+        } catch (_) {}
+      }
+    })();
+  </script>
+</body>
+</html>
