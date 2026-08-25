@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Wikipedia Plain Viewer</title>
+<title>Viewer</title>
 <style>
   :root {
     color-scheme: light;
@@ -38,14 +38,10 @@
   }
 
   .toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
     display: grid;
     gap: 6px;
     padding: 10px 0;
-    background: color-mix(in srgb, var(--bg) 94%, transparent);
-    backdrop-filter: blur(8px);
+    background: transparent;
     border-bottom: 1px solid var(--line);
   }
 
@@ -576,7 +572,7 @@
       });
 
       article.appendChild(wrap);
-      document.title = `${query} — Wikipedia Search`;
+      document.title = 'Viewer';
       setStatus(`「${query}」 / ${results.length}件 / ${host}`);
       window.scrollTo({ top: 0, behavior: 'instant' });
     } catch (error) {
@@ -630,7 +626,7 @@
       nodes.forEach(node => fragment.appendChild(node));
       article.appendChild(fragment);
 
-      document.title = `${data.parse.title || parsed.title} — Wikipedia Plain Viewer`;
+      document.title = 'Viewer';
       setStatus(`${data.parse.title || parsed.title} / ${parsed.host}`);
       window.scrollTo({ top: 0, behavior: 'instant' });
     } catch (error) {
