@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MP4 Seamless Joiner</title>
+<style>
+:root{
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:#17191d;background:#f4f5f7
+}
+*{box-sizing:border-box}
+body{margin:0;min-width:320px;min-height:100vh}
+button,input{font:inherit}
+.shell{min-height:100vh;display:grid;place-items:center;padding:32px 16px}
+.card{
+  width:min(780px,100%);background:#fff;border:1px solid #dfe2e7;border-radius:22px;
+  padding:clamp(22px,5vw,42px);box-shadow:0 18px 60px rgba(0,0,0,.06)
+}
+.eyebrow{font-size:11px;letter-spacing:.15em;font-weight:800;color:#747b86}
+h1{margin:10px 0 8px;font-size:clamp(30px,6vw,50px);letter-spacing:-.045em}
+.lead{margin:0 0 26px;color:#656b75;line-height:1.6}
+.drop{
+  display:grid;gap:8px;place-items:center;text-align:center;padding:38px 18px;
+  border:1.5px dashed #b7bdc7;border-radius:16px;background:#fafbfc;cursor:pointer;transition:.15s
+}
+.drop:hover,.drop.over{border-color:#17191d;background:#f2f4f7}
+.drop input{display:none}.drop strong{font-size:17px}.drop span{font-size:13px;color:#777e89}
+.head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 9px;font-size:13px;color:#6b717c}
+.textbtn{border:0;background:none;color:#616873;cursor:pointer;padding:4px 0}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.item{
+  display:grid;grid-template-columns:22px 34px minmax(0,1fr) auto auto;gap:10px;align-items:center;
+  padding:12px;border:1px solid #e2e5e9;border-radius:12px;background:#fff
+}
+.item.dragging{opacity:.45}.drag{cursor:grab;color:#a3a9b2;letter-spacing:-4px}
+.num{font-size:12px;color:#8b919b;font-variant-numeric:tabular-nums}
+.meta{min-width:0;display:grid;gap:2px}.meta strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.meta small{font-size:11px;color:#8b919b}
+.moves{display:flex;gap:4px}
+.moves button,.remove{
+  border:1px solid #dfe2e7;background:#fff;border-radius:8px;min-width:30px;height:30px;cursor:pointer
+}
+.remove{font-size:18px;color:#777e89}
+.primary{
+  width:100%;min-height:52px;margin-top:22px;border:0;border-radius:12px;background:#17191d;
+  color:#fff;font-weight:750;cursor:pointer
+}
+.primary:disabled{opacity:.35;cursor:not-allowed}
+.status{min-height:22px;margin-top:14px;color:#5f6670;font-size:13px;line-height:1.55}
+.progress{height:7px;margin-top:9px;border-radius:999px;background:#e7eaee;overflow:hidden}
+.bar{width:0;height:100%;background:#17191d;transition:width .15s linear}
+.result{
+  margin-top:12px;padding:13px 14px;border-radius:11px;background:#f1f4f7;color:#25282e;
+  font-size:13px;line-height:1.55
+}
+.download{
+  width:100%;min-height:50px;margin-top:12px;border-radius:12px;background:#edf0f4;color:#17191d;
+  display:grid;place-items:center;text-decoration:none;font-weight:750
+}
+details{margin-top:23px;border-top:1px solid #eceef1;padding-top:17px;color:#626873;font-size:12px;line-height:1.65}
+summary{cursor:pointer;font-weight:700;color:#454a53}
+.errorbox{
+  margin-top:10px;padding:12px;border:1px solid #ead6d6;border-radius:10px;background:#fff8f8;
+  color:#7d3333;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere
+}
+.badge{display:inline-block;padding:2px 7px;border-radius:99px;background:#edf0f4;color:#575e68;font-size:10px;font-weight:700}
+.hidden{display:none!important}
+@media(max-width:560px){
+  .item{grid-template-columns:18px 28px minmax(0,1fr) auto}.moves{display:none}.card{border-radius:16px}
+}
+</style>
+</head>
+<body>
+<main class="shell">
+<section class="card">
+  <div class="eyebrow">PACKET COPY / NO RE-ENCODE / NO EXTRA FRAMES</div>
+  <h1>MP4 Seamless Joiner</h1>
+  <p class="lead">
+    複数のMP4の圧縮済み映像・音声をそのままコピーし、1本のMP4へ連結します。
+    黒フレーム・無音・フェード・補間フレームは追加しません。
+  </p>
+
+  <label id="drop" class="drop" for="picker">
+    <input id="picker" type="file" accept=".mp4,video/mp4" multiple>
+    <strong>MP4を選択 / ドロップ</strong>
+    <span>動画データは外部サーバーへアップロードしません</span>
+  </label>
+
+  <div id="fileArea" class="hidden">
+    <div class="head">
+      <span id="count">0 files</span>
+      <button id="clear" class="textbtn" type="button">すべて削除</button>
+    </div>
+    <ol id="list" class="list"></ol>
+  </div>
+
+  <button id="join" class="primary" type="button" disabled>MP4を結合して保存</button>
+
+  <div id="status" class="status" aria-live="polite"></div>
+  <div id="progress" class="progress hidden"><div id="bar" class="bar"></div></div>
+  <div id="result" class="result hidden"></div>
+  <a id="download" class="download hidden" download="joined.mp4">結合済みMP4をダウンロード</a>
+  <pre id="errorbox" class="errorbox hidden"></pre>
+
+  <details>
+    <summary>結合方式について</summary>
+    <p>
+      この版はFFmpeg.wasmを使用しません。MP4から映像・音声のencoded packetを読み出し、
+      packetの内容を変更せず、新しいMP4へ順番にremuxします。
+      各クリップの境界では次のクリップのタイムスタンプを直前のクリップの終端へ接続します。
+      映像フレームや音声サンプルの生成・削除は行いません。
+    </p>
+    <p>
+      安全に無加工連結するため、映像codec/configuration/解像度と、
+      音声codec/sample rate/channel configurationが異なる場合は、
+      どのファイルが何と異なるかを画面に表示して停止します。
+    </p>
+    <p>
+      初回起動時のみ結合ライブラリをCDNから読み込みます。動画本体はブラウザ内で処理します。
+      対応ブラウザでは保存先へ直接ストリーミングするため、大容量MP4でも全出力をメモリに保持しません。
+    </p>
+  </details>
+</section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (s) => document.querySelector(s);
+  const picker = $("#picker");
+  const drop = $("#drop");
+  const fileArea = $("#fileArea");
+  const count = $("#count");
+  const clear = $("#clear");
+  const list = $("#list");
+  const join = $("#join");
+  const status = $("#status");
+  const progress = $("#progress");
+  const bar = $("#bar");
+  const result = $("#result");
+  const download = $("#download");
+  const errorbox = $("#errorbox");
+
+  let files = [];
+  let outputUrl = null;
+  let libraryPromise = null;
+
+  const CDN_URLS = [
+    "https://cdn.jsdelivr.net/npm/mediabunny@1.53.0/dist/bundles/mediabunny.min.mjs",
+    "https://unpkg.com/mediabunny@1.53.0/dist/bundles/mediabunny.min.mjs"
+  ];
+
+  function humanSize(bytes) {
+    const units = ["B","KB","MB","GB","TB"];
+    let v = bytes, i = 0;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+    return `${v.toFixed(i ? 1 : 0)} ${units[i]}`;
+  }
+
+  function setProgress(value) {
+    const p = Math.max(0, Math.min(1, value));
+    bar.style.width = `${Math.round(p * 100)}%`;
+  }
+
+  function clearOutput() {
+    if (outputUrl) URL.revokeObjectURL(outputUrl);
+    outputUrl = null;
+    result.classList.add("hidden");
+    download.classList.add("hidden");
+    download.removeAttribute("href");
+    errorbox.classList.add("hidden");
+    errorbox.textContent = "";
+    status.textContent = "";
+    progress.classList.add("hidden");
+    setProgress(0);
+  }
+
+  function render() {
+    list.innerHTML = "";
+    fileArea.classList.toggle("hidden", files.length === 0);
+    count.textContent = `${files.length} file${files.length === 1 ? "" : "s"}`;
+    join.disabled = files.length < 2;
+
+    files.forEach((file, index) => {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.draggable = true;
+
+      const drag = document.createElement("span");
+      drag.className = "drag";
+      drag.textContent = "⋮⋮";
+
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = String(index + 1).padStart(2, "0");
+
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      const name = document.createElement("strong");
+      name.textContent = file.name;
+      name.title = file.name;
+      const size = document.createElement("small");
+      size.textContent = humanSize(file.size);
+      meta.append(name, size);
+
+      const moves = document.createElement("span");
+      moves.className = "moves";
+      const up = document.createElement("button");
+      up.type = "button"; up.textContent = "↑"; up.title = "上へ";
+      up.onclick = () => {
+        if (index > 0) {
+          [files[index - 1], files[index]] = [files[index], files[index - 1]];
+          clearOutput(); render();
+        }
+      };
+      const down = document.createElement("button");
+      down.type = "button"; down.textContent = "↓"; down.title = "下へ";
+      down.onclick = () => {
+        if (index < files.length - 1) {
+          [files[index + 1], files[index]] = [files[index], files[index + 1]];
+          clearOutput(); render();
+        }
+      };
+      moves.append(up, down);
+
+      const remove = document.createElement("button");
+      remove.className = "remove"; remove.type = "button";
+      remove.textContent = "×"; remove.title = "削除";
+      remove.onclick = () => {
+        files.splice(index, 1);
+        clearOutput(); render();
+      };
+
+      li.append(drag, num, meta, moves, remove);
+
+      li.addEventListener("dragstart", e => {
+        li.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", String(index));
+      });
+      li.addEventListener("dragend", () => li.classList.remove("dragging"));
+      li.addEventListener("dragover", e => e.preventDefault());
+      li.addEventListener("drop", e => {
+        e.preventDefault();
+        const from = Number(e.dataTransfer.getData("text/plain"));
+        if (!Number.isFinite(from) || from === index) return;
+        const [moved] = files.splice(from, 1);
+        files.splice(index, 0, moved);
+        clearOutput(); render();
+      });
+
+      list.append(li);
+    });
+  }
+
+  function addFiles(fileList) {
+    const incoming = [...fileList].filter(f =>
+      f.type === "video/mp4" || f.name.toLowerCase().endsWith(".mp4")
+    );
+    files.push(...incoming);
+    clearOutput();
+    render();
+  }
+
+  picker.addEventListener("change", () => {
+    addFiles(picker.files);
+    picker.value = "";
+  });
+
+  ["dragenter","dragover"].forEach(type => drop.addEventListener(type, e => {
+    e.preventDefault(); drop.classList.add("over");
+  }));
+  ["dragleave","drop"].forEach(type => drop.addEventListener(type, e => {
+    e.preventDefault(); drop.classList.remove("over");
+  }));
+  drop.addEventListener("drop", e => addFiles(e.dataTransfer.files));
+
+  clear.addEventListener("click", () => {
+    files = [];
+    clearOutput();
+    render();
+  });
+
+  async function loadLibrary() {
+    if (libraryPromise) return libraryPromise;
+
+    libraryPromise = (async () => {
+      const errors = [];
+      for (const url of CDN_URLS) {
+        try {
+          // Mediabunny is browser-native and has no worker-loading restriction;
+          // load its browser ESM bundle directly from the CDN.
+          return await import(url);
+        } catch (e) {
+          errors.push(`${url}\n${e && e.message ? e.message : String(e)}`);
+        }
+      }
+      throw new Error(
+        "結合ライブラリを読み込めませんでした。インターネット接続またはCDNアクセスをご確認ください。\n\n" +
+        errors.join("\n\n")
+      );
+    })();
+
+    try { return await libraryPromise; }
+    catch (e) { libraryPromise = null; throw e; }
+  }
+
+  function bytes(value) {
+    if (!value) return null;
+    if (value instanceof ArrayBuffer) return new Uint8Array(value);
+    if (ArrayBuffer.isView(value)) return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+    return null;
+  }
+
+  function byteArraysEqual(a, b) {
+    const aa = bytes(a), bb = bytes(b);
+    if (!aa && !bb) return true;
+    if (!aa || !bb || aa.byteLength !== bb.byteLength) return false;
+    for (let i = 0; i < aa.byteLength; i++) if (aa[i] !== bb[i]) return false;
+    return true;
+  }
+
+  async function inspectFile(MB, file) {
+    const input = new MB.Input({
+      source: new MB.BlobSource(file),
+      formats: MB.ALL_FORMATS
+    });
+
+    const [videoTrack, audioTrack] = await Promise.all([
+      input.getPrimaryVideoTrack(),
+      input.getPrimaryAudioTrack()
+    ]);
+
+    if (!videoTrack) {
+      input.dispose();
+      throw new Error(`${file.name}: 映像トラックが見つかりません。`);
+    }
+
+    const video = {
+      track: videoTrack,
+      codec: await videoTrack.getCodec(),
+      codecString: await videoTrack.getCodecParameterString(),
+      width: await videoTrack.getCodedWidth(),
+      height: await videoTrack.getCodedHeight(),
+      rotation: await videoTrack.getRotation(),
+      decoderConfig: await videoTrack.getDecoderConfig(),
+      first: await videoTrack.getFirstTimestamp(),
+      end: await videoTrack.computeDuration()
+    };
+
+    if (!video.codec || !video.decoderConfig) {
+      input.dispose();
+      throw new Error(`${file.name}: 映像codec/configurationを読み取れません。`);
+    }
+
+    let audio = null;
+    if (audioTrack) {
+      audio = {
+        track: audioTrack,
+        codec: await audioTrack.getCodec(),
+        codecString: await audioTrack.getCodecParameterString(),
+        sampleRate: await audioTrack.getSampleRate(),
+        channels: await audioTrack.getNumberOfChannels(),
+        decoderConfig: await audioTrack.getDecoderConfig(),
+        first: await audioTrack.getFirstTimestamp(),
+        end: await audioTrack.computeDuration()
+      };
+      if (!audio.codec || !audio.decoderConfig) {
+        input.dispose();
+        throw new Error(`${file.name}: 音声codec/configurationを読み取れません。`);
+      }
+    }
+
+    const clipStart = Math.min(video.first, audio ? audio.first : Infinity);
+    const clipEnd = Math.max(video.end, audio ? audio.end : -Infinity);
+    if (!Number.isFinite(clipStart) || !Number.isFinite(clipEnd) || clipEnd <= clipStart) {
+      input.dispose();
+      throw new Error(`${file.name}: 有効なタイムラインを読み取れません。`);
+    }
+
+    return {
+      file, input, video, audio,
+      clipStart,
+      clipEnd,
+      duration: clipEnd - clipStart
+    };
+  }
+
+  function compareMedia(base, current) {
+    const diffs = [];
+
+    if (base.video.codec !== current.video.codec)
+      diffs.push(`映像codec: ${base.video.codec} → ${current.video.codec}`);
+    if ((base.video.codecString || "") !== (current.video.codecString || ""))
+      diffs.push(`映像codec string: ${base.video.codecString || "不明"} → ${current.video.codecString || "不明"}`);
+    if (base.video.width !== current.video.width || base.video.height !== current.video.height)
+      diffs.push(`解像度: ${base.video.width}×${base.video.height} → ${current.video.width}×${current.video.height}`);
+    if (base.video.rotation !== current.video.rotation)
+      diffs.push(`回転情報: ${base.video.rotation}° → ${current.video.rotation}°`);
+    if (!byteArraysEqual(base.video.decoderConfig.description, current.video.decoderConfig.description))
+      diffs.push("映像codec configuration（SPS/PPS等）が異なります");
+
+    if (!!base.audio !== !!current.audio) {
+      diffs.push(base.audio ? "音声トラックがありません" : "音声トラックの有無が異なります");
+    } else if (base.audio && current.audio) {
+      if (base.audio.codec !== current.audio.codec)
+        diffs.push(`音声codec: ${base.audio.codec} → ${current.audio.codec}`);
+      if ((base.audio.codecString || "") !== (current.audio.codecString || ""))
+        diffs.push(`音声codec string: ${base.audio.codecString || "不明"} → ${current.audio.codecString || "不明"}`);
+      if (base.audio.sampleRate !== current.audio.sampleRate)
+        diffs.push(`sample rate: ${base.audio.sampleRate} Hz → ${current.audio.sampleRate} Hz`);
+      if (base.audio.channels !== current.audio.channels)
+        diffs.push(`channel数: ${base.audio.channels} → ${current.audio.channels}`);
+      if (!byteArraysEqual(base.audio.decoderConfig.description, current.audio.decoderConfig.description))
+        diffs.push("音声codec configurationが異なります");
+    }
+
+    return diffs;
+  }
+
+  function formatDuration(sec) {
+    if (!Number.isFinite(sec)) return "?";
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return h > 0
+      ? `${h}:${String(m).padStart(2,"0")}:${s.toFixed(2).padStart(5,"0")}`
+      : `${m}:${s.toFixed(2).padStart(5,"0")}`;
+  }
+
+  async function makeSaveHandle() {
+    if (!("showSaveFilePicker" in window)) return null;
+    try {
+      return await window.showSaveFilePicker({
+        suggestedName: "joined.mp4",
+        types: [{
+          description: "MP4 Video",
+          accept: { "video/mp4": [".mp4"] }
+        }]
+      });
+    } catch (e) {
+      if (e && e.name === "AbortError") return "cancelled";
+      throw e;
+    }
+  }
+
+  async function copyPackets(MB, track, source, shift, seq) {
+    const sink = new MB.EncodedPacketSink(track);
+    for await (const packet of sink.packets()) {
+      const shifted = packet.clone({
+        timestamp: packet.timestamp + shift,
+        sequenceNumber: seq.value++
+      });
+      await source.add(shifted);
+    }
+  }
+
+  async function joinFiles(MB, inspected, saveHandle) {
+    const base = inspected[0];
+    let target;
+    let directToDisk = false;
+
+    if (saveHandle) {
+      const writable = await saveHandle.createWritable();
+      target = new MB.StreamTarget(writable);
+      directToDisk = true;
+    } else {
+      target = new MB.BufferTarget();
+    }
+
+    const output = new MB.Output({
+      format: new MB.Mp4OutputFormat(),
+      target
+    });
+
+    const videoSource = new MB.EncodedVideoPacketSource(base.video.codec);
+    output.addVideoTrack(videoSource, {
+      rotation: base.video.rotation,
+      decoderConfig: base.video.decoderConfig
+    });
+
+    let audioSource = null;
+    if (base.audio) {
+      audioSource = new MB.EncodedAudioPacketSource(base.audio.codec);
+      output.addAudioTrack(audioSource, {
+        decoderConfig: base.audio.decoderConfig
+      });
+    }
+
+    await output.start();
+
+    // Video and audio are concatenated on their own native packet timelines.
+    // This avoids inventing a blank video interval or silent audio interval when
+    // one track is a few milliseconds longer than the other.
+    let videoOffset = 0;
+    let audioOffset = 0;
+    const videoSeq = { value: 0 };
+    const audioSeq = { value: 0 };
+
+    try {
+      for (let i = 0; i < inspected.length; i++) {
+        const clip = inspected[i];
+        status.textContent = `連結中 ${i + 1}/${inspected.length}: ${clip.file.name}`;
+        setProgress(0.28 + (i / inspected.length) * 0.64);
+
+        const videoShift = videoOffset - clip.video.first;
+        const jobs = [
+          copyPackets(MB, clip.video.track, videoSource, videoShift, videoSeq)
+        ];
+
+        if (audioSource && clip.audio) {
+          const audioShift = audioOffset - clip.audio.first;
+          jobs.push(copyPackets(MB, clip.audio.track, audioSource, audioShift, audioSeq));
+        }
+
+        await Promise.all(jobs);
+
+        videoOffset += clip.video.end - clip.video.first;
+        if (clip.audio) audioOffset += clip.audio.end - clip.audio.first;
+
+        setProgress(0.28 + ((i + 1) / inspected.length) * 0.64);
+      }
+
+      videoSource.close();
+      if (audioSource) audioSource.close();
+
+      status.textContent = "MP4コンテナを確定しています…";
+      await output.finalize();
+      setProgress(1);
+
+      return { output, target, directToDisk, duration: Math.max(videoOffset, audioOffset) };
+    } catch (e) {
+      try { await output.cancel(); } catch {}
+      throw e;
+    }
+  }
+
+  join.addEventListener("click", async () => {
+    if (files.length < 2) return;
+
+    clearOutput();
+    progress.classList.remove("hidden");
+    join.disabled = true;
+    clear.disabled = true;
+    picker.disabled = true;
+    let inspected = [];
+
+    try {
+      // File System Access API needs a user activation, so ask for the destination first.
+      const saveHandle = await makeSaveHandle();
+      if (saveHandle === "cancelled") {
+        status.textContent = "保存をキャンセルしました。";
+        progress.classList.add("hidden");
+        return;
+      }
+
+      status.textContent = "結合エンジンを読み込んでいます…";
+      setProgress(0.03);
+      const MB = await loadLibrary();
+      setProgress(0.08);
+
+      status.textContent = "MP4の映像・音声仕様を確認しています…";
+
+      for (let i = 0; i < files.length; i++) {
+        status.textContent = `解析中 ${i + 1}/${files.length}: ${files[i].name}`;
+        const info = await inspectFile(MB, files[i]);
+        inspected.push(info);
+        setProgress(0.08 + ((i + 1) / files.length) * 0.18);
+      }
+
+      const base = inspected[0];
+      const mismatchLines = [];
+      for (let i = 1; i < inspected.length; i++) {
+        const diffs = compareMedia(base, inspected[i]);
+        if (diffs.length) {
+          mismatchLines.push(
+            `【${inspected[i].file.name}】\n` +
+            diffs.map(d => `・${d}`).join("\n")
+          );
+        }
+      }
+
+      if (mismatchLines.length) {
+        throw new Error(
+          `無加工連結できない差異が見つかりました。\n基準: ${base.file.name}\n\n` +
+          mismatchLines.join("\n\n")
+        );
+      }
+
+      const totalDuration = inspected.reduce((sum, x) => sum + x.duration, 0);
+      status.textContent =
+        `仕様確認OK — ${base.video.codecString || base.video.codec}, ` +
+        `${base.video.width}×${base.video.height}` +
+        (base.audio ? ` / ${base.audio.codecString || base.audio.codec}, ${base.audio.sampleRate} Hz` : " / 音声なし");
+      setProgress(0.28);
+
+      const joined = await joinFiles(MB, inspected, saveHandle || null);
+
+      if (joined.directToDisk) {
+        result.textContent =
+          `完了しました。${files.length}本を追加フレームなし・再エンコードなしで連結しました。` +
+          ` 推定長さ: ${formatDuration(joined.duration || totalDuration)}`;
+        result.classList.remove("hidden");
+        status.textContent = "保存先へ書き込み完了。";
+      } else {
+        const buffer = joined.target.buffer;
+        if (!buffer) throw new Error("出力バッファを取得できませんでした。");
+        const blob = new Blob([buffer], { type: "video/mp4" });
+        outputUrl = URL.createObjectURL(blob);
+        download.href = outputUrl;
+        download.classList.remove("hidden");
+        result.textContent =
+          `完了しました。${files.length}本を追加フレームなし・再エンコードなしで連結しました。` +
+          ` 出力: ${humanSize(blob.size)} / 推定長さ: ${formatDuration(joined.duration || totalDuration)}`;
+        result.classList.remove("hidden");
+        status.textContent =
+          "このブラウザでは直接保存APIが使えないため、下のボタンから保存してください。";
+      }
+
+    } catch (e) {
+      console.error(e);
+      status.textContent = "結合できませんでした。下の詳細をご確認ください。";
+      errorbox.textContent =
+        (e && e.stack ? e.stack : e && e.message ? e.message : String(e));
+      errorbox.classList.remove("hidden");
+      progress.classList.add("hidden");
+    } finally {
+      for (const x of inspected) {
+        try { x.input.dispose(); } catch {}
+      }
+      join.disabled = files.length < 2;
+      clear.disabled = false;
+      picker.disabled = false;
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
