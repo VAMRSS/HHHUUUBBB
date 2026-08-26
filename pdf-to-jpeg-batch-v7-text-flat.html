@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PDF → JPEG Batch Redaction</title>
+  <title>PDF → JPEG Batch Redaction v7</title>
   <style>
     :root{
       --bg:#f2f2f2;
@@ -168,7 +168,7 @@
   <main class="app">
     <header>
       <h1>PDF → JPEG</h1>
-      <div class="sub">BATCH / ROTATE / REDACTION / LOCAL CONVERTER</div>
+      <div class="sub">BATCH / ROTATE / REDACTION / TEXT-FLAT / LOCAL CONVERTER</div>
     </header>
 
     <label class="drop" id="dropZone" for="fileInput">
@@ -221,6 +221,7 @@
       黒塗りは「このPDFのみ」と「全PDFに共通適用」の両方に対応します。共通適用は、ページレイアウトや向きが共通のPDF群で使うと実用的です。<br>
       回転指定と黒塗り指定は、書き出されるJPEG画像そのものに反映されます。<br>
       変換後は、すべてのPDF・全ページを1つのZIPにまとめ、JPEGをZIP直下へそのまま格納します。<br>
+      PDF本文・標準フォント・CJK文字・フォーム／注釈をCanvasへ描画してからJPEG化します。<br>
       変換処理はブラウザ内で行われ、PDFファイル自体はサーバーへ送信されません。初回利用時のみPDF.js / JSZipをCDNから読み込みます。
     </div>
   </main>
@@ -288,6 +289,44 @@
     import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+    const PDFJS_ASSET_BASE = "https://unpkg.com/pdfjs-dist@4.10.38/";
+
+    function loadPdfDocument(data){
+      return pdfjsLib.getDocument({
+        data,
+        cMapUrl: PDFJS_ASSET_BASE + "cmaps/",
+        cMapPacked: true,
+        standardFontDataUrl: PDFJS_ASSET_BASE + "standard_fonts/",
+        enableXfa: true,
+        // FontFaceに依存せず、PDF.js側で文字をパスとしてCanvasへ描画する。
+        // PDF→画像化時の「文字だけ消える」ケースを避けるための設定。
+        disableFontFace: true,
+        useSystemFonts: true
+      }).promise;
+    }
+
+    async function renderPdfPageToCanvas(page, canvas, viewport){
+      const ctx = canvas.getContext("2d", {alpha: false});
+      canvas.width = Math.max(1, Math.floor(viewport.width));
+      canvas.height = Math.max(1, Math.floor(viewport.height));
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      try {
+        if (document.fonts?.ready) await document.fonts.ready;
+      } catch (_) {}
+
+      await page.render({
+        canvasContext: ctx,
+        viewport,
+        intent: "print",
+        annotationMode: pdfjsLib.AnnotationMode.ENABLE_STORAGE,
+        background: "#fff"
+      }).promise;
+
+      return ctx;
+    }
 
     const $ = id => document.getElementById(id);
 
@@ -550,7 +589,7 @@
     async function prepareThumbnail(item){
       try{
         const buf = await item.file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+        const pdf = await loadPdfDocument(buf);
         item.pages = pdf.numPages;
 
         const page = await pdf.getPage(1);
@@ -561,12 +600,7 @@
         const viewport = page.getViewport({scale: thumbScale});
 
         const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d", {alpha: false});
-        canvas.width = Math.max(1, Math.floor(viewport.width));
-        canvas.height = Math.max(1, Math.floor(viewport.height));
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-        await page.render({canvasContext: ctx, viewport}).promise;
+        await renderPdfPageToCanvas(page, canvas, viewport);
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.82));
         item.thumbUrl = URL.createObjectURL(blob);
@@ -718,7 +752,7 @@
     async function renderEditorPreview(item){
       try{
         const buf = await item.file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+        const pdf = await loadPdfDocument(buf);
         const page = await pdf.getPage(1);
         const exportRotation = normalizedRotation((page.rotate || 0) + item.rotation);
         const baseViewport = page.getViewport({scale: 1, rotation: exportRotation});
@@ -728,12 +762,7 @@
         const viewport = page.getViewport({scale: previewScale, rotation: exportRotation});
 
         const baseCanvas = document.createElement("canvas");
-        const baseCtx = baseCanvas.getContext("2d", {alpha: false});
-        baseCanvas.width = Math.max(1, Math.floor(viewport.width));
-        baseCanvas.height = Math.max(1, Math.floor(viewport.height));
-        baseCtx.fillStyle = "#fff";
-        baseCtx.fillRect(0, 0, baseCanvas.width, baseCanvas.height);
-        await page.render({canvasContext: baseCtx, viewport}).promise;
+        await renderPdfPageToCanvas(page, baseCanvas, viewport);
 
         editorCanvas.width = baseCanvas.width;
         editorCanvas.height = baseCanvas.height;
@@ -823,7 +852,7 @@
         for (let fileIndex = 0; fileIndex < items.length; fileIndex++){
           const item = items[fileIndex];
           const buf = await item.file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+          const pdf = await loadPdfDocument(buf);
           const group = {
             sourceName: item.file.name,
             rotation: item.rotation,
@@ -845,13 +874,7 @@
             });
 
             const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d", {alpha: false});
-            canvas.width = Math.max(1, Math.floor(viewport.width));
-            canvas.height = Math.max(1, Math.floor(viewport.height));
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(0,0,canvas.width,canvas.height);
-
-            await page.render({canvasContext: ctx, viewport}).promise;
+            const ctx = await renderPdfPageToCanvas(page, canvas, viewport);
 
             const mergedRedactions = [...globalRedactions, ...item.redactions];
             if (mergedRedactions.length) {
@@ -867,8 +890,8 @@
               ctx.restore();
             }
 
-            const blob = await new Promise(resolve =>
-              canvas.toBlob(resolve, "image/jpeg", q)
+            const blob = await new Promise((resolve, reject) =>
+              canvas.toBlob(result => result ? resolve(result) : reject(new Error("JPEG encoding failed.")), "image/jpeg", q)
             );
 
             const filename = `${baseName(item.file.name)}_${String(pageNo).padStart(pad,"0")}.jpg`;
