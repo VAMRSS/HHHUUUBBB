@@ -1,0 +1,1396 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="color-scheme" content="light dark">
+  <title>Image Redaction Utility</title>
+  <style>
+    /*
+      VAMRSS INTERFACE LANGUAGE
+      Image Redaction Utility
+      Application implementation / v1.0.0
+    */
+
+    :root {
+      --bg: #f8f9f9;
+      --ink: #111714;
+      --sub: #68736f;
+      --muted: #9aa5a1;
+      --line: #d9ddda;
+      --line-soft: rgba(17, 23, 20, 0.12);
+      --surface: #ffffff;
+      --surface-soft: rgba(104, 115, 111, 0.08);
+      --input-bg: rgba(96, 112, 132, 0.10);
+      --danger: #9b3144;
+
+      --font-main: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", Meiryo, sans-serif;
+      --font-serif: Georgia, "Times New Roman", "Yu Mincho", "Hiragino Mincho ProN", serif;
+      --font-mono: "Courier New", Courier, monospace;
+
+      --page-max: 980px;
+      --page-pad-x: 18px;
+      --page-pad-top: 24px;
+      --page-pad-bottom: 48px;
+
+      --gap-xs: 4px;
+      --gap-s: 8px;
+      --gap-m: 12px;
+      --gap-l: 24px;
+      --gap-xl: 48px;
+
+      --fz-note: 10px;
+      --fz-caption: 11px;
+      --fz-body: 12px;
+      --fz-section: 15px;
+      --fz-display: 18px;
+
+      --lh-body: 2;
+      --lh-note: 1.7;
+      --lh-tight: 1.45;
+      --weight: 300;
+      --letter: 0.01em;
+      --letter-nav: 0.09em;
+
+      --input-min-height: 28px;
+      --transition: 120ms ease;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #101312;
+      --ink: #edf1ef;
+      --sub: #a4aeaa;
+      --muted: #707b77;
+      --line: #2f3834;
+      --line-soft: rgba(237, 241, 239, 0.12);
+      --surface: #151a18;
+      --surface-soft: rgba(237, 241, 239, 0.06);
+      --input-bg: rgba(237, 241, 239, 0.08);
+      --danger: #e28a9a;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-main);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      letter-spacing: var(--letter);
+    }
+
+    button, input, select {
+      font: inherit;
+      letter-spacing: inherit;
+      border-radius: 0;
+    }
+
+    button { cursor: pointer; }
+    button:disabled { cursor: default; }
+
+    :focus-visible {
+      outline: 1px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    .app {
+      width: min(100%, var(--page-max));
+      margin: 0 auto;
+      padding: var(--page-pad-top) var(--page-pad-x) var(--page-pad-bottom);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--gap-s);
+      align-items: start;
+      margin: 0 0 var(--gap-xl);
+    }
+
+    .site-title {
+      margin: 0;
+      color: var(--ink);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+    }
+
+    .text-nav,
+    .button-row,
+    .row-actions,
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--gap-s);
+      min-width: 0;
+    }
+
+    .text-nav { justify-content: flex-end; }
+
+    .text-button {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .35em;
+      margin: 0;
+      padding: 0;
+      min-height: 24px;
+      border: 0;
+      background: transparent;
+      color: var(--sub);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+      transition: color var(--transition), opacity var(--transition);
+    }
+
+    .text-button:hover,
+    .text-button.selected,
+    .text-button.active { color: var(--ink); }
+
+    .text-button.danger { color: var(--danger); }
+    .text-button[disabled] { opacity: .35; pointer-events: none; }
+    .text-button.bracket::before { content: "["; color: var(--muted); }
+    .text-button.bracket::after { content: "]"; color: var(--muted); }
+
+    .fixed-meta {
+      position: fixed;
+      z-index: 70;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      color: var(--muted);
+      background: transparent;
+      font-size: var(--fz-note);
+      font-weight: var(--weight);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .fixed-meta.copyright { left: max(12px, env(safe-area-inset-left)); }
+    .fixed-meta.version { right: max(12px, env(safe-area-inset-right)); }
+
+    .section {
+      margin: 0 0 var(--gap-xl);
+      padding: 0;
+    }
+
+    .section-title {
+      margin: 0 0 var(--gap-m);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: var(--fz-section);
+      font-weight: var(--weight);
+      line-height: 1.4;
+      letter-spacing: .02em;
+    }
+
+    .section-subtitle,
+    .queue-title {
+      margin: 0;
+      color: var(--sub);
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+    }
+
+    .eyebrow,
+    .status-label,
+    .queue-count,
+    .result-meta,
+    .img-meta,
+    .redaction-label,
+    .modal-sub {
+      color: var(--muted);
+      font-size: var(--fz-note);
+      line-height: var(--lh-note);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+    }
+
+    .display-title {
+      margin: 0 0 var(--gap-s);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: var(--fz-display);
+      font-weight: var(--weight);
+      line-height: var(--lh-tight);
+      letter-spacing: .02em;
+    }
+
+    .hint,
+    .note-copy {
+      margin: 0;
+      color: var(--sub);
+      font-size: var(--fz-caption);
+      font-weight: var(--weight);
+      line-height: var(--lh-note);
+    }
+
+    .upload-area {
+      min-height: 126px;
+      display: grid;
+      align-content: center;
+      gap: var(--gap-xs);
+      padding: var(--gap-l) 0;
+      color: var(--ink);
+      background: transparent;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .upload-area:hover,
+    .upload-area.drag { background: var(--surface-soft); }
+    .upload-main { font-size: var(--fz-body); }
+    .upload-sub { color: var(--muted); font-size: var(--fz-caption); line-height: var(--lh-note); }
+    input[type="file"] { display: none; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--gap-m);
+      margin-top: var(--gap-l);
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--gap-xs);
+      min-width: 0;
+    }
+
+    label {
+      color: var(--sub);
+      font-size: var(--fz-caption);
+      font-weight: var(--weight);
+      line-height: var(--lh-note);
+    }
+
+    select {
+      width: 100%;
+      min-width: 0;
+      min-height: var(--input-min-height);
+      margin: 0;
+      padding: 4px 6px;
+      color: var(--ink);
+      -webkit-text-fill-color: var(--ink);
+      background: var(--input-bg);
+      border: 1px solid transparent;
+      outline: none;
+      font-size: var(--fz-body);
+      font-weight: var(--weight);
+      line-height: var(--lh-body);
+    }
+    select:focus { border-color: var(--line); }
+
+    input[type="range"] {
+      width: 100%;
+      margin: 0;
+      accent-color: var(--ink);
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 44px;
+      gap: var(--gap-s);
+      align-items: center;
+      min-height: var(--input-min-height);
+    }
+
+    .range-value {
+      color: var(--sub);
+      font-size: var(--fz-caption);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .queue { display: none; margin-top: var(--gap-l); }
+    .queue.visible { display: block; }
+
+    .queue-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--gap-m);
+      align-items: baseline;
+      margin-bottom: var(--gap-s);
+    }
+
+    .img-row {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr) auto;
+      gap: var(--gap-m);
+      align-items: center;
+      padding: var(--gap-s) 0;
+      border-top: 1px solid var(--line-soft);
+    }
+    .img-row:last-child { border-bottom: 1px solid var(--line-soft); }
+
+    .thumb-button {
+      appearance: none;
+      width: 76px;
+      height: 56px;
+      padding: 0;
+      overflow: hidden;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+    }
+
+    .thumb {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .img-info { min-width: 0; }
+    .img-name {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--ink);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .img-meta,
+    .redaction-label {
+      margin-top: 1px;
+      text-transform: none;
+      letter-spacing: var(--letter);
+    }
+
+    .row-actions { justify-content: flex-end; }
+
+    .button-row {
+      justify-content: flex-start;
+      margin-top: var(--gap-l);
+    }
+
+    .status-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--gap-m);
+      align-items: baseline;
+      min-height: 24px;
+      margin-top: var(--gap-m);
+      color: var(--muted);
+      font-size: var(--fz-note);
+      line-height: var(--lh-note);
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .progress {
+      height: 1px;
+      margin-top: var(--gap-s);
+      overflow: hidden;
+      background: var(--line-soft);
+    }
+    .progress > div {
+      width: 0;
+      height: 100%;
+      background: var(--ink);
+      transition: width var(--transition);
+    }
+
+    .results { display: none; margin-top: var(--gap-l); }
+    .results.visible { display: block; }
+
+    .result-list-head,
+    .result-row {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr) 92px;
+      gap: var(--gap-m);
+      align-items: center;
+    }
+
+    .result-list-head {
+      margin-bottom: var(--gap-s);
+      color: var(--sub);
+      font-size: var(--fz-note);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+    }
+
+    .result-row {
+      padding: var(--gap-s) 0;
+      border-top: 1px solid var(--line-soft);
+    }
+    .result-row:last-child { border-bottom: 1px solid var(--line-soft); }
+
+    .result-img {
+      width: 76px;
+      height: 56px;
+      display: block;
+      object-fit: contain;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+    }
+
+    .result-info { min-width: 0; }
+    .result-name {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--ink);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .result-meta {
+      margin-top: 1px;
+      text-transform: none;
+      letter-spacing: var(--letter);
+    }
+
+    .note {
+      margin-top: var(--gap-l);
+      padding: var(--gap-s) 0;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      background: rgba(17,23,20,.24);
+      backdrop-filter: blur(3px);
+    }
+    .modal.visible { display: flex; }
+
+    .modal-panel {
+      width: min(980px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--gap-m);
+      align-items: baseline;
+      padding: 18px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: var(--fz-section);
+      font-weight: var(--weight);
+      line-height: 1.4;
+    }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .editor-main {
+      min-width: 0;
+      overflow: auto;
+      padding: var(--gap-m);
+      background: var(--surface-soft);
+      border-right: 1px solid var(--line-soft);
+    }
+
+    .editor-stage {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #editorCanvas {
+      display: block;
+      max-width: 100%;
+      background: #fff;
+      border: 1px solid var(--line-soft);
+      cursor: crosshair;
+    }
+
+    .editor-side {
+      min-width: 0;
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .editor-block {
+      margin-bottom: var(--gap-l);
+    }
+    .editor-block:last-child { margin-bottom: 0; }
+
+    .editor-kicker {
+      margin-bottom: var(--gap-s);
+      color: var(--muted);
+      font-size: var(--fz-note);
+      line-height: var(--lh-note);
+      letter-spacing: var(--letter-nav);
+      text-transform: uppercase;
+    }
+
+    .editor-stats {
+      color: var(--ink);
+      font-size: var(--fz-caption);
+      line-height: var(--lh-note);
+    }
+    .editor-stats strong { font-weight: var(--weight); }
+
+    .editor-actions {
+      display: grid;
+      gap: var(--gap-s);
+    }
+
+    .editor-actions .text-button {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    @media (max-width: 720px) {
+      :root { --page-pad-x: 14px; }
+      .controls { grid-template-columns: 1fr; }
+      .img-row { grid-template-columns: 64px minmax(0, 1fr); }
+      .thumb-button { width: 64px; height: 48px; }
+      .row-actions { grid-column: 2; justify-content: flex-start; }
+      .result-list-head { display: none; }
+      .result-row { grid-template-columns: 64px minmax(0, 1fr); }
+      .result-img { width: 64px; height: 48px; }
+      .result-row > .text-button { grid-column: 2; justify-self: start; }
+      .status-line { grid-template-columns: 1fr; gap: 0; }
+      .modal-body { grid-template-columns: 1fr; }
+      .editor-main { border-right: 0; border-bottom: 1px solid var(--line-soft); }
+      .fixed-meta { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-meta copyright">(C) 2026 SHIRASUSALAD</div>
+  <div class="fixed-meta version">v1.0.0</div>
+
+  <main class="app">
+    <header class="topbar">
+      <h1 class="site-title">＊VAMRSS(IMAGE REDACTION)</h1>
+      <nav class="text-nav" aria-label="Application controls">
+        <button class="text-button bracket" id="themeBtn" type="button">DARK</button>
+      </nav>
+    </header>
+
+    <section class="section">
+      <div class="eyebrow">Local image utility / batch redaction</div>
+      <h2 class="display-title">Black out image regions without uploading files.</h2>
+      <p class="hint">複数画像を読み込み、サムネイルから拡大して黒塗り範囲を指定します。画像単位または全画像共通で適用できます。</p>
+
+      <label class="upload-area" id="dropZone" for="fileInput">
+        <span class="upload-main">DROP IMAGES / 画像をここにドロップ</span>
+        <span class="upload-sub">クリックして複数画像を選択することもできます。</span>
+      </label>
+      <input id="fileInput" type="file" accept="image/*" multiple>
+
+      <div class="controls">
+        <div class="field">
+          <label for="outputFormat">Format / 出力形式</label>
+          <select id="outputFormat">
+            <option value="image/png" selected>PNG</option>
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/webp">WEBP</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="quality">Quality / JPEG・WEBP品質</label>
+          <div class="range-row">
+            <input id="quality" type="range" min="50" max="100" step="1" value="92">
+            <div class="range-value"><span id="qualityValue">92</span>%</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fileNameMode">Filename / 出力ファイル名</label>
+          <select id="fileNameMode">
+            <option value="keep" selected>KEEP ORIGINAL</option>
+            <option value="suffix">ADD _REDACTED</option>
+          </select>
+        </div>
+      </div>
+
+      <section id="queueSection" class="queue">
+        <div class="queue-head">
+          <div class="queue-title">Image Queue</div>
+          <div class="queue-count" id="queueCount"></div>
+        </div>
+        <div id="imageList"></div>
+      </section>
+
+      <div class="button-row">
+        <button class="text-button bracket" id="processBtn" type="button" disabled>PROCESS</button>
+        <button class="text-button" id="zipBtn" type="button" disabled>DOWNLOAD ZIP</button>
+        <button class="text-button danger" id="clearBtn" type="button" disabled>CLEAR</button>
+      </div>
+
+      <div class="status-line" aria-live="polite">
+        <span class="status-badge"><span class="status-dot"></span><span id="status">画像を選択してください。</span></span>
+        <span id="statusMeta">LOCAL PROCESSING</span>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+
+      <section class="results" id="results"></section>
+
+      <div class="note">
+        <p class="note-copy">サムネイルをクリックすると拡大プレビューで黒塗り範囲を指定できます。処理後は各画像を個別にDOWNLOADできるほか、すべてをZIP直下へまとめて保存できます。処理はブラウザ内で完結します。</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="editorModal">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title" id="editorTitle">Redaction</div>
+          <div class="modal-sub" id="editorSub">Drag over the image to add blackout areas.</div>
+        </div>
+        <button type="button" class="text-button" id="closeEditorBtn" aria-label="閉じる">CLOSE</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="editor-main">
+          <div class="editor-stage">
+            <canvas id="editorCanvas"></canvas>
+          </div>
+        </div>
+
+        <aside class="editor-side">
+          <div class="editor-block">
+            <div class="editor-kicker">Add Redaction</div>
+            <div class="field">
+              <label for="redactionScope">Scope / 適用範囲</label>
+              <select id="redactionScope">
+                <option value="local">THIS IMAGE</option>
+                <option value="global">ALL IMAGES</option>
+              </select>
+            </div>
+            <p class="hint" style="margin-top:8px">画像上をドラッグすると黒塗り矩形を追加します。</p>
+          </div>
+
+          <div class="editor-block">
+            <div class="editor-kicker">Current Status</div>
+            <div class="editor-stats" id="editorStats">-</div>
+          </div>
+
+          <div class="editor-block">
+            <div class="editor-kicker">Edit</div>
+            <div class="editor-actions">
+              <button type="button" class="text-button" id="undoLocalBtn">UNDO THIS IMAGE</button>
+              <button type="button" class="text-button danger" id="clearLocalBtn">CLEAR THIS IMAGE</button>
+              <button type="button" class="text-button" id="undoGlobalBtn">UNDO COMMON</button>
+              <button type="button" class="text-button danger" id="clearGlobalBtn">CLEAR COMMON</button>
+            </div>
+          </div>
+
+          <div class="editor-block">
+            <div class="editor-kicker">Note</div>
+            <p class="hint">黒塗りを変更した場合は、PROCESSを再実行してください。共通適用は、レイアウトが近い画像群での利用を想定しています。</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+const $ = id => document.getElementById(id);
+
+    const dropZone = $("dropZone");
+    const fileInput = $("fileInput");
+    const queueSection = $("queueSection");
+    const queueCount = $("queueCount");
+    const imageList = $("imageList");
+    const processBtn = $("processBtn");
+    const zipBtn = $("zipBtn");
+    const clearBtn = $("clearBtn");
+    const status = $("status");
+    const progressBar = $("progressBar");
+    const results = $("results");
+    const outputFormat = $("outputFormat");
+    const quality = $("quality");
+    const qualityValue = $("qualityValue");
+    const fileNameMode = $("fileNameMode");
+
+    const editorModal = $("editorModal");
+    const editorTitle = $("editorTitle");
+    const editorSub = $("editorSub");
+    const editorCanvas = $("editorCanvas");
+    const closeEditorBtn = $("closeEditorBtn");
+    const redactionScope = $("redactionScope");
+    const editorStats = $("editorStats");
+    const undoLocalBtn = $("undoLocalBtn");
+    const clearLocalBtn = $("clearLocalBtn");
+    const undoGlobalBtn = $("undoGlobalBtn");
+    const clearGlobalBtn = $("clearGlobalBtn");
+    const themeBtn = $("themeBtn");
+
+    let items = [];
+    let processedItems = [];
+    let globalRedactions = [];
+    let idSeed = 0;
+
+    const editorState = {
+      itemId: null,
+      baseImage: null,
+      drawing: false,
+      startX: 0,
+      startY: 0,
+      tempRect: null
+    };
+
+    quality.addEventListener("input", () => qualityValue.textContent = quality.value);
+
+
+    function setTheme(theme){
+      document.documentElement.dataset.theme = theme;
+      themeBtn.textContent = theme === "light" ? "DARK" : "LIGHT";
+    }
+
+    themeBtn.addEventListener("click", () => {
+      setTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+    });
+
+
+    ["dragenter","dragover"].forEach(evt => dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add("drag");
+    }));
+    ["dragleave","drop"].forEach(evt => dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("drag");
+    }));
+
+    dropZone.addEventListener("drop", e => addFiles([...e.dataTransfer.files]));
+    fileInput.addEventListener("change", e => {
+      addFiles([...e.target.files]);
+      fileInput.value = "";
+    });
+
+    processBtn.addEventListener("click", processAll);
+    zipBtn.addEventListener("click", downloadAllZip);
+    clearBtn.addEventListener("click", resetAll);
+
+    closeEditorBtn.addEventListener("click", closeEditor);
+    editorModal.addEventListener("click", e => {
+      if (e.target === editorModal) closeEditor();
+    });
+    window.addEventListener("keydown", e => {
+      if (e.key === "Escape" && editorModal.classList.contains("visible")) closeEditor();
+    });
+
+    undoLocalBtn.addEventListener("click", () => {
+      const item = currentEditorItem();
+      if (!item || !item.redactions.length) return;
+      item.redactions.pop();
+      onRedactionChanged("この画像の黒塗りを1件削除しました。");
+    });
+
+    clearLocalBtn.addEventListener("click", () => {
+      const item = currentEditorItem();
+      if (!item || !item.redactions.length) return;
+      item.redactions = [];
+      onRedactionChanged("この画像の黒塗りを全削除しました。");
+    });
+
+    undoGlobalBtn.addEventListener("click", () => {
+      if (!globalRedactions.length) return;
+      globalRedactions.pop();
+      onRedactionChanged("共通の黒塗りを1件削除しました。");
+    });
+
+    clearGlobalBtn.addEventListener("click", () => {
+      if (!globalRedactions.length) return;
+      globalRedactions = [];
+      onRedactionChanged("共通の黒塗りを全削除しました。");
+    });
+
+    editorCanvas.addEventListener("mousedown", e => {
+      if (!editorState.baseImage) return;
+      const pos = canvasPoint(e);
+      editorState.drawing = true;
+      editorState.startX = pos.x;
+      editorState.startY = pos.y;
+      editorState.tempRect = null;
+    });
+
+    editorCanvas.addEventListener("mousemove", e => {
+      if (!editorState.drawing) return;
+      const pos = canvasPoint(e);
+      editorState.tempRect = normalizeRect(editorState.startX, editorState.startY, pos.x, pos.y);
+      redrawEditor();
+    });
+
+    const finishDraw = () => {
+      if (!editorState.drawing) return;
+      editorState.drawing = false;
+      const rect = editorState.tempRect;
+      editorState.tempRect = null;
+
+      if (!rect) {
+        redrawEditor();
+        return;
+      }
+
+      const minW = 0.008;
+      const minH = 0.008;
+      if (rect.w < minW || rect.h < minH) {
+        redrawEditor();
+        return;
+      }
+
+      const item = currentEditorItem();
+      if (!item) return;
+
+      if (redactionScope.value === "global") {
+        globalRedactions.push(rect);
+        onRedactionChanged("共通の黒塗りを追加しました。");
+      } else {
+        item.redactions.push(rect);
+        onRedactionChanged("この画像の黒塗りを追加しました。");
+      }
+    };
+
+    editorCanvas.addEventListener("mouseup", finishDraw);
+    editorCanvas.addEventListener("mouseleave", finishDraw);
+
+    function isImage(file){
+      return file && file.type && file.type.startsWith("image/");
+    }
+
+    function formatBytes(bytes){
+      if (!bytes) return "0 B";
+      const units = ["B","KB","MB","GB"];
+      const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+      return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + " " + units[i];
+    }
+
+    function currentEditorItem(){
+      return items.find(x => x.id === editorState.itemId) || null;
+    }
+
+    function baseName(name){
+      return name.replace(/\.[^.]+$/, "");
+    }
+
+    function extensionFromMime(mime){
+      if (mime === "image/png") return "png";
+      if (mime === "image/jpeg") return "jpg";
+      if (mime === "image/webp") return "webp";
+      return "png";
+    }
+
+    function normalizeRect(x1, y1, x2, y2){
+      const w = editorCanvas.width || 1;
+      const h = editorCanvas.height || 1;
+      const left = Math.max(0, Math.min(x1, x2));
+      const top = Math.max(0, Math.min(y1, y2));
+      const right = Math.min(w, Math.max(x1, x2));
+      const bottom = Math.min(h, Math.max(y1, y2));
+      return {
+        x: left / w,
+        y: top / h,
+        w: Math.max(0, right - left) / w,
+        h: Math.max(0, bottom - top) / h
+      };
+    }
+
+    function canvasPoint(evt){
+      const rect = editorCanvas.getBoundingClientRect();
+      const scaleX = editorCanvas.width / rect.width;
+      const scaleY = editorCanvas.height / rect.height;
+      return {
+        x: Math.max(0, Math.min(editorCanvas.width, (evt.clientX - rect.left) * scaleX)),
+        y: Math.max(0, Math.min(editorCanvas.height, (evt.clientY - rect.top) * scaleY))
+      };
+    }
+
+    function invalidateResults(){
+      processedItems.forEach(item => {
+        if (item.outputUrl) URL.revokeObjectURL(item.outputUrl);
+      });
+      processedItems = [];
+      results.innerHTML = "";
+      results.classList.remove("visible");
+      zipBtn.disabled = true;
+      progressBar.style.width = "0%";
+    }
+
+    function updateControls(){
+      const ready = items.length > 0 && items.every(x => x.loaded && !x.error);
+      processBtn.disabled = !ready;
+      clearBtn.disabled = items.length === 0;
+      zipBtn.disabled = processedItems.length === 0;
+    }
+
+    async function addFiles(files){
+      const imageFiles = files.filter(isImage);
+      if (!imageFiles.length) {
+        status.textContent = "画像ファイルを選択してください。";
+        return;
+      }
+
+      for (const file of imageFiles) {
+        const duplicate = items.some(x =>
+          x.file.name === file.name &&
+          x.file.size === file.size &&
+          x.file.lastModified === file.lastModified
+        );
+        if (duplicate) continue;
+
+        const item = {
+          id: ++idSeed,
+          file,
+          sourceUrl: URL.createObjectURL(file),
+          width: null,
+          height: null,
+          loaded: false,
+          error: false,
+          redactions: []
+        };
+        items.push(item);
+        renderQueue();
+        await prepareImage(item);
+      }
+
+      invalidateResults();
+      renderQueue();
+      setTheme(document.documentElement.dataset.theme || "light");
+    updateControls();
+      status.textContent = `${items.length}件の画像を読み込みました。必要に応じて黒塗りを設定してから処理してください。`;
+    }
+
+    function loadImage(url){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    async function prepareImage(item){
+      try{
+        const img = await loadImage(item.sourceUrl);
+        item.width = img.naturalWidth;
+        item.height = img.naturalHeight;
+        item.loaded = true;
+      }catch(err){
+        console.error(err);
+        item.loaded = true;
+        item.error = true;
+      }
+      renderQueue();
+    }
+
+    function renderQueue(){
+      queueSection.classList.toggle("visible", items.length > 0);
+      queueCount.textContent = items.length ? `${items.length} IMAGE` : "";
+      imageList.innerHTML = "";
+
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "img-row";
+        row.dataset.id = item.id;
+
+        const thumbButton = document.createElement("button");
+        thumbButton.type = "button";
+        thumbButton.className = "thumb-button";
+        thumbButton.title = "クリックして黒塗り設定";
+        thumbButton.addEventListener("click", () => openEditor(item.id));
+
+        if (!item.error) {
+          const img = document.createElement("img");
+          img.className = "thumb";
+          img.alt = item.file.name;
+          img.src = item.sourceUrl;
+          thumbButton.appendChild(img);
+        } else {
+          const ph = document.createElement("span");
+          ph.style.fontSize = "10px";
+          ph.style.color = "#777";
+          ph.textContent = "PREVIEW ERROR";
+          thumbButton.appendChild(ph);
+        }
+
+        const info = document.createElement("div");
+        info.className = "img-info";
+
+        const name = document.createElement("div");
+        name.className = "img-name";
+        name.textContent = item.file.name;
+
+        const meta = document.createElement("div");
+        meta.className = "img-meta";
+        const dimText = item.width && item.height ? `${item.width} × ${item.height}px` : (item.error ? "画像読み込み失敗" : "読み込み中");
+        meta.textContent = `${dimText} / ${formatBytes(item.file.size)}`;
+
+        const redact = document.createElement("div");
+        redact.className = "redaction-label";
+        redact.textContent = `黒塗り: この画像 ${item.redactions.length}件 / 共通 ${globalRedactions.length}件`;
+
+        info.append(name, meta, redact);
+
+        const actions = document.createElement("div");
+        actions.className = "row-actions";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "text-button danger";
+        remove.textContent = "DELETE";
+        remove.addEventListener("click", () => removeItem(item.id));
+
+        actions.append(remove);
+        row.append(thumbButton, info, actions);
+        imageList.appendChild(row);
+      });
+    }
+
+    function removeItem(id){
+      const index = items.findIndex(x => x.id === id);
+      if (index < 0) return;
+      const [item] = items.splice(index, 1);
+      URL.revokeObjectURL(item.sourceUrl);
+      if (editorState.itemId === item.id) closeEditor();
+      invalidateResults();
+      renderQueue();
+      updateControls();
+      status.textContent = items.length ? `${items.length}件の画像が残っています。` : "画像を選択してください。";
+    }
+
+    async function openEditor(id){
+      const item = items.find(x => x.id === id);
+      if (!item || item.error || !item.loaded) return;
+
+      editorState.itemId = id;
+      editorTitle.textContent = item.file.name;
+      editorSub.textContent = "拡大プレビュー / ドラッグで黒塗り範囲を追加";
+      editorModal.classList.add("visible");
+      await renderEditorPreview(item);
+      updateEditorStats();
+    }
+
+    function closeEditor(){
+      editorModal.classList.remove("visible");
+      editorState.itemId = null;
+      editorState.baseImage = null;
+      editorState.drawing = false;
+      editorState.tempRect = null;
+      const ctx = editorCanvas.getContext("2d");
+      ctx.clearRect(0, 0, editorCanvas.width || 1, editorCanvas.height || 1);
+    }
+
+    async function renderEditorPreview(item){
+      try{
+        const img = await loadImage(item.sourceUrl);
+        const maxW = 760;
+        const maxH = 980;
+        const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+        const w = Math.max(1, Math.round(img.naturalWidth * scale));
+        const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+        editorCanvas.width = w;
+        editorCanvas.height = h;
+        editorState.baseImage = img;
+        redrawEditor();
+      }catch(err){
+        console.error(err);
+        status.textContent = "黒塗りプレビューの表示に失敗しました。";
+      }
+    }
+
+    function redrawEditor(){
+      const ctx = editorCanvas.getContext("2d", {alpha: false});
+      if (!editorState.baseImage) {
+        ctx.clearRect(0, 0, editorCanvas.width || 1, editorCanvas.height || 1);
+        return;
+      }
+
+      ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, editorCanvas.width, editorCanvas.height);
+      ctx.drawImage(editorState.baseImage, 0, 0, editorCanvas.width, editorCanvas.height);
+
+      const item = currentEditorItem();
+      const localRects = item ? item.redactions : [];
+
+      drawRectSet(ctx, globalRedactions, "rgba(0,0,0,0.92)");
+      drawRectSet(ctx, localRects, "rgba(0,0,0,0.92)");
+
+      if (editorState.tempRect) {
+        drawRectSet(ctx, [editorState.tempRect], "rgba(0,0,0,0.7)", true);
+      }
+
+      updateEditorStats();
+    }
+
+    function drawRectSet(ctx, rects, fill, isPreview = false){
+      rects.forEach(rect => {
+        const x = Math.round(rect.x * editorCanvas.width);
+        const y = Math.round(rect.y * editorCanvas.height);
+        const w = Math.max(1, Math.round(rect.w * editorCanvas.width));
+        const h = Math.max(1, Math.round(rect.h * editorCanvas.height));
+        ctx.save();
+        ctx.fillStyle = fill;
+        ctx.fillRect(x, y, w, h);
+        ctx.lineWidth = isPreview ? 2 : 1;
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.strokeRect(x + 0.5, y + 0.5, w, h);
+        ctx.restore();
+      });
+    }
+
+    function updateEditorStats(){
+      const item = currentEditorItem();
+      const localCount = item ? item.redactions.length : 0;
+      const globalCount = globalRedactions.length;
+      editorStats.innerHTML = `この画像: <strong>${localCount}</strong> 件<br>共通適用: <strong>${globalCount}</strong> 件`;
+    }
+
+    function onRedactionChanged(message){
+      invalidateResults();
+      renderQueue();
+      redrawEditor();
+      updateControls();
+      status.textContent = `${message} 再処理してください。`;
+    }
+
+    async function processAll(){
+      if (!items.length) return;
+
+      processBtn.disabled = true;
+      zipBtn.disabled = true;
+      clearBtn.disabled = true;
+      invalidateResults();
+      results.classList.add("visible");
+
+      const mime = outputFormat.value;
+      const q = Number(quality.value) / 100;
+
+      try{
+        for (let i = 0; i < items.length; i++){
+          const item = items[i];
+          status.textContent = `処理中 ${i + 1} / ${items.length}`;
+          progressBar.style.width = `${Math.round((i / items.length) * 100)}%`;
+
+          const img = await loadImage(item.sourceUrl);
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d", {alpha: false});
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+
+          const mergedRedactions = [...globalRedactions, ...item.redactions];
+          if (mergedRedactions.length) {
+            ctx.save();
+            ctx.fillStyle = "#000";
+            mergedRedactions.forEach(rect => {
+              const x = Math.max(0, Math.min(canvas.width, Math.round(rect.x * canvas.width)));
+              const y = Math.max(0, Math.min(canvas.height, Math.round(rect.y * canvas.height)));
+              const w = Math.max(1, Math.min(canvas.width - x, Math.round(rect.w * canvas.width)));
+              const h = Math.max(1, Math.min(canvas.height - y, Math.round(rect.h * canvas.height)));
+              ctx.fillRect(x, y, w, h);
+            });
+            ctx.restore();
+          }
+
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, mime, q));
+          const ext = extensionFromMime(mime);
+          const suffix = fileNameMode.value === "suffix" ? "_redacted" : "";
+          const filename = `${baseName(item.file.name)}${suffix}.${ext}`;
+          const outputUrl = URL.createObjectURL(blob);
+
+          processedItems.push({
+            id: item.id,
+            sourceName: item.file.name,
+            filename,
+            blob,
+            outputUrl,
+            width: canvas.width,
+            height: canvas.height,
+            redactionCount: mergedRedactions.length
+          });
+
+          canvas.width = 1;
+          canvas.height = 1;
+          renderResults();
+        }
+
+        progressBar.style.width = "100%";
+        status.textContent = `${items.length}件の画像へ黒塗りを反映しました。ZIP保存できます。`;
+        zipBtn.disabled = processedItems.length === 0;
+      }catch(err){
+        console.error(err);
+        status.textContent = "処理に失敗しました。";
+      }finally{
+        processBtn.disabled = false;
+        clearBtn.disabled = items.length === 0;
+      }
+    }
+
+    function renderResults(){
+      results.innerHTML = "";
+
+      if (processedItems.length) {
+        const head = document.createElement("div");
+        head.className = "result-list-head";
+        head.innerHTML = "<span>PREVIEW</span><span>OUTPUT</span><span>ACTION</span>";
+        results.appendChild(head);
+      }
+
+      processedItems.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "result-row";
+
+        const preview = document.createElement("img");
+        preview.className = "result-img";
+        preview.src = item.outputUrl;
+        preview.alt = item.filename;
+
+        const info = document.createElement("div");
+        info.className = "result-info";
+
+        const name = document.createElement("div");
+        name.className = "result-name";
+        name.textContent = item.filename;
+
+        const meta = document.createElement("div");
+        meta.className = "result-meta";
+        meta.textContent = `${item.width} × ${item.height}px / REDACTION ${item.redactionCount}`;
+
+        info.append(name, meta);
+
+        const download = document.createElement("button");
+        download.type = "button";
+        download.className = "text-button bracket";
+        download.textContent = "DOWNLOAD";
+        download.addEventListener("click", () => triggerBlobDownload(item.blob, item.filename));
+
+        row.append(preview, info, download);
+        results.appendChild(row);
+      });
+
+      results.classList.toggle("visible", processedItems.length > 0);
+    }
+
+    function triggerBlobDownload(blob, filename){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1200);
+    }
+
+    async function downloadAllZip(){
+      if (!processedItems.length || !window.JSZip) return;
+
+      zipBtn.disabled = true;
+      status.textContent = "変換結果を1つのZIPにまとめています…";
+
+      try{
+        const zip = new JSZip();
+        const usedNames = new Set();
+
+        processedItems.forEach(item => {
+          let filename = item.filename;
+          const stem = filename.replace(/\.[^.]+$/, "");
+          const extMatch = filename.match(/\.([^.]+)$/);
+          const ext = extMatch ? extMatch[0] : "";
+          let n = 2;
+
+          while (usedNames.has(filename.toLowerCase())) {
+            filename = `${stem}_${n++}${ext}`;
+          }
+
+          usedNames.add(filename.toLowerCase());
+          zip.file(filename, item.blob);
+        });
+
+        const blob = await zip.generateAsync({type:"blob", compression:"STORE"}, meta => {
+          progressBar.style.width = `${Math.round(meta.percent)}%`;
+        });
+
+        triggerBlobDownload(blob, "image-redaction_batch.zip");
+        status.textContent = "変換結果を1つのZIPにまとめて保存しました。";
+      }catch(err){
+        console.error(err);
+        status.textContent = "ZIP作成に失敗しました。";
+      }finally{
+        zipBtn.disabled = false;
+      }
+    }
+
+    function resetAll(){
+      items.forEach(item => URL.revokeObjectURL(item.sourceUrl));
+      processedItems.forEach(item => URL.revokeObjectURL(item.outputUrl));
+
+      items = [];
+      processedItems = [];
+      globalRedactions = [];
+      imageList.innerHTML = "";
+      results.innerHTML = "";
+      queueSection.classList.remove("visible");
+      results.classList.remove("visible");
+      progressBar.style.width = "0%";
+      fileInput.value = "";
+      closeEditor();
+      status.textContent = "画像を選択してください。";
+      updateControls();
+    }
+
+    window.addEventListener("beforeunload", () => {
+      items.forEach(item => URL.revokeObjectURL(item.sourceUrl));
+      processedItems.forEach(item => URL.revokeObjectURL(item.outputUrl));
+    });
+
+    updateControls();
+  
+  </script>
+</body>
+</html>
