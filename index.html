@@ -367,6 +367,16 @@
         href: 'https://www.google.com/maps',
         icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32',
         label: 'Google Maps'
+      },
+      {
+        href: 'https://outlook.cloud.microsoft/mail/',
+        icon: 'https://www.google.com/s2/favicons?domain=outlook.cloud.microsoft&sz=32',
+        label: 'Outlook Mail'
+      },
+      {
+        href: 'https://outlook.cloud.microsoft/calendar/',
+        icon: 'https://www.google.com/s2/favicons?domain=outlook.cloud.microsoft&sz=32',
+        label: 'Outlook Calendar'
       }
     ];
 
@@ -452,7 +462,8 @@
         href.includes('forms.office.com') ||
         href.includes('smcon.app.box.com') ||
         href.includes('app.colorkrewbiz.com') ||
-        href.includes('engage.cloud.microsoft')
+        href.includes('engage.cloud.microsoft') ||
+        href.includes('outlook.cloud.microsoft')
       ) return 'WORK';
 
       if (
