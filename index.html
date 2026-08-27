@@ -362,6 +362,11 @@
         href: 'https://mag.tecture.jp/',
         icon: 'https://www.google.com/s2/favicons?domain=mag.tecture.jp&sz=32',
         label: 'TECTURE MAG'
+      },
+      {
+        href: 'https://www.google.com/maps',
+        icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32',
+        label: 'Google Maps'
       }
     ];
 
@@ -370,7 +375,6 @@
       'AI',
       'TRANSIT',
       'TOOLS',
-      'LEARNING',
       'MEDIA',
       'LIFESTYLE',
       'OTHER'
@@ -454,13 +458,16 @@
       if (
         href.includes('claude.ai') ||
         href.includes('gemini.google.com') ||
-        href.includes('chatgpt.com')
+        href.includes('chatgpt.com') ||
+        href.includes('d3ul3fhsq70saq.cloudfront.net')
       ) return 'AI';
 
       if (
         href.includes('highwaybus.com') ||
         href.includes('transit.yahoo.co.jp') ||
-        href.includes('eki-net.com')
+        href.includes('eki-net.com') ||
+        href.includes('google.com/maps') ||
+        href.includes('maps.google.com')
       ) return 'TRANSIT';
 
       if (
@@ -468,7 +475,6 @@
         href.includes('keep.google.com')
       ) return 'TOOLS';
 
-      if (href.includes('mazelingo-web.pages.dev')) return 'LEARNING';
       if (href.includes('mag.tecture.jp')) return 'MEDIA';
 
       if (
@@ -483,12 +489,14 @@
       bookmarkRows.innerHTML = '';
 
       const baseBookmarks = Array.isArray(window.HHUB_BOOKMARKS)
-        ? window.HHUB_BOOKMARKS.map(bookmark => ({
-            ...bookmark,
-            href: bookmark.href
-              .replace('https://vamrss.github.io/HHHUUUBBB/', 'https://vamrss.github.io/VHUB/')
-              .replace('https://vamrss.github.io/HHUUBB/', 'https://vamrss.github.io/VHUB/')
-          }))
+        ? window.HHUB_BOOKMARKS
+            .filter(bookmark => !bookmark.href.toLowerCase().includes('mazelingo-web.pages.dev'))
+            .map(bookmark => ({
+              ...bookmark,
+              href: bookmark.href
+                .replace('https://vamrss.github.io/HHHUUUBBB/', 'https://vamrss.github.io/VHUB/')
+                .replace('https://vamrss.github.io/HHUUBB/', 'https://vamrss.github.io/VHUB/')
+            }))
         : [];
 
       const bookmarks = [...baseBookmarks, ...EXTRA_BOOKMARKS].map(bookmark => ({
