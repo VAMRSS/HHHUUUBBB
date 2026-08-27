@@ -173,6 +173,42 @@
       text-transform: uppercase;
     }
 
+    .bookmark-title {
+      margin-top: 32px;
+    }
+
+    .bookmarks {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 3px 0;
+    }
+
+    .bookmark-link {
+      display: inline-flex;
+      width: 16px;
+      height: 16px;
+      align-items: center;
+      justify-content: center;
+      opacity: .68;
+      text-decoration: none;
+      transition: opacity 120ms ease;
+    }
+
+    .bookmark-link:hover,
+    .bookmark-link:focus-visible {
+      opacity: 1;
+      outline: none;
+    }
+
+    .bookmark-icon {
+      display: block;
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+    }
+
     .footer {
       display: flex;
       justify-content: flex-end;
@@ -185,6 +221,7 @@
       .topbar { column-gap: 12px; }
       .app-row { gap: .7em; }
       .app-info { gap: .55em; }
+      .bookmarks { gap: 9px; }
     }
   </style>
 </head>
@@ -199,11 +236,15 @@
 
     <section id="appRows" class="list" aria-label="Web applications"></section>
 
+    <h2 class="section-title bookmark-title">BOOKMARKS</h2>
+    <section id="bookmarkRows" class="bookmarks" aria-label="Bookmarks"></section>
+
     <footer class="footer">
       <span id="downloadStatus"></span>
     </footer>
   </main>
 
+  <script src="./bookmarks-data.js"></script>
   <script>
     const APPS = [
       {
@@ -267,6 +308,7 @@
     const root = document.documentElement;
     const themeButton = document.getElementById('themeButton');
     const appRows = document.getElementById('appRows');
+    const bookmarkRows = document.getElementById('bookmarkRows');
     const downloadStatus = document.getElementById('downloadStatus');
 
     function setTheme(theme) {
@@ -326,6 +368,31 @@
       APPS.forEach(app => appRows.appendChild(createRow(app)));
     }
 
+    function renderBookmarks() {
+      bookmarkRows.innerHTML = '';
+      const bookmarks = Array.isArray(window.HHUB_BOOKMARKS) ? window.HHUB_BOOKMARKS : [];
+
+      bookmarks.forEach(bookmark => {
+        const link = document.createElement('a');
+        link.className = 'bookmark-link';
+        link.href = bookmark.href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.title = bookmark.label;
+        link.setAttribute('aria-label', bookmark.label);
+
+        const icon = document.createElement('img');
+        icon.className = 'bookmark-icon';
+        icon.src = bookmark.icon;
+        icon.alt = '';
+        icon.width = 16;
+        icon.height = 16;
+
+        link.append(icon);
+        bookmarkRows.append(link);
+      });
+    }
+
     async function downloadHtml(app) {
       downloadStatus.textContent = 'DOWNLOADING…';
       try {
@@ -352,6 +419,7 @@
     }
 
     renderApps();
+    renderBookmarks();
   </script>
 </body>
 </html>
