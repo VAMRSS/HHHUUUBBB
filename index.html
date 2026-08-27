@@ -206,11 +206,33 @@
     }
 
     .bookmarks {
+      display: grid;
+      gap: 2px;
+      padding: 3px 0;
+    }
+
+    .bookmark-group {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      align-items: center;
+      min-height: 24px;
+    }
+
+    .bookmark-category {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: 0.09em;
+      white-space: nowrap;
+    }
+
+    .bookmark-icons {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 10px;
-      padding: 3px 0;
+      min-width: 0;
     }
 
     .bookmark-link {
@@ -249,7 +271,8 @@
       .topbar { column-gap: 12px; }
       .app-row { gap: .7em; }
       .app-info { gap: .55em; }
-      .bookmarks { gap: 9px; }
+      .bookmark-group { grid-template-columns: 84px minmax(0, 1fr); }
+      .bookmark-icons { gap: 9px; }
     }
   </style>
 </head>
@@ -263,7 +286,6 @@
     </header>
 
     <h2 class="section-title">WEB APPLICATIONS</h2>
-
     <section id="appRows" class="list" aria-label="Web applications"></section>
 
     <h2 class="section-title bookmark-title">BOOKMARKS</h2>
@@ -343,6 +365,17 @@
       }
     ];
 
+    const BOOKMARK_CATEGORY_ORDER = [
+      'WORK',
+      'AI',
+      'TRANSIT',
+      'TOOLS',
+      'LEARNING',
+      'MEDIA',
+      'LIFESTYLE',
+      'OTHER'
+    ];
+
     const root = document.documentElement;
     const themeButton = document.getElementById('themeButton');
     const appRows = document.getElementById('appRows');
@@ -406,8 +439,49 @@
       APPS.forEach(app => appRows.appendChild(createRow(app)));
     }
 
+    function getBookmarkCategory(bookmark) {
+      const href = bookmark.href.toLowerCase();
+
+      if (
+        href.includes('infroneer.app.lumapps.com') ||
+        href.includes('wowtalkapi.com') ||
+        href.includes('forms.office.com') ||
+        href.includes('smcon.app.box.com') ||
+        href.includes('app.colorkrewbiz.com') ||
+        href.includes('engage.cloud.microsoft')
+      ) return 'WORK';
+
+      if (
+        href.includes('claude.ai') ||
+        href.includes('gemini.google.com') ||
+        href.includes('chatgpt.com')
+      ) return 'AI';
+
+      if (
+        href.includes('highwaybus.com') ||
+        href.includes('transit.yahoo.co.jp') ||
+        href.includes('eki-net.com')
+      ) return 'TRANSIT';
+
+      if (
+        href.includes('vamrss.github.io/vhub') ||
+        href.includes('keep.google.com')
+      ) return 'TOOLS';
+
+      if (href.includes('mazelingo-web.pages.dev')) return 'LEARNING';
+      if (href.includes('mag.tecture.jp')) return 'MEDIA';
+
+      if (
+        href.includes('partner.sapporobeer.jp') ||
+        href.includes('asahibeer.co.jp')
+      ) return 'LIFESTYLE';
+
+      return 'OTHER';
+    }
+
     function renderBookmarks() {
       bookmarkRows.innerHTML = '';
+
       const baseBookmarks = Array.isArray(window.HHUB_BOOKMARKS)
         ? window.HHUB_BOOKMARKS.map(bookmark => ({
             ...bookmark,
@@ -416,26 +490,48 @@
               .replace('https://vamrss.github.io/HHUUBB/', 'https://vamrss.github.io/VHUB/')
           }))
         : [];
-      const bookmarks = [...baseBookmarks, ...EXTRA_BOOKMARKS];
 
-      bookmarks.forEach(bookmark => {
-        const link = document.createElement('a');
-        link.className = 'bookmark-link';
-        link.href = bookmark.href;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.title = bookmark.label;
-        link.setAttribute('aria-label', bookmark.label);
+      const bookmarks = [...baseBookmarks, ...EXTRA_BOOKMARKS].map(bookmark => ({
+        ...bookmark,
+        category: getBookmarkCategory(bookmark)
+      }));
 
-        const icon = document.createElement('img');
-        icon.className = 'bookmark-icon';
-        icon.src = bookmark.icon;
-        icon.alt = '';
-        icon.width = 16;
-        icon.height = 16;
+      BOOKMARK_CATEGORY_ORDER.forEach(category => {
+        const items = bookmarks.filter(bookmark => bookmark.category === category);
+        if (!items.length) return;
 
-        link.append(icon);
-        bookmarkRows.append(link);
+        const group = document.createElement('div');
+        group.className = 'bookmark-group';
+
+        const categoryLabel = document.createElement('span');
+        categoryLabel.className = 'bookmark-category';
+        categoryLabel.textContent = category;
+
+        const icons = document.createElement('span');
+        icons.className = 'bookmark-icons';
+
+        items.forEach(bookmark => {
+          const link = document.createElement('a');
+          link.className = 'bookmark-link';
+          link.href = bookmark.href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.title = `${bookmark.label} · ${bookmark.category}`;
+          link.setAttribute('aria-label', `${bookmark.label}, ${bookmark.category}`);
+
+          const icon = document.createElement('img');
+          icon.className = 'bookmark-icon';
+          icon.src = bookmark.icon;
+          icon.alt = '';
+          icon.width = 16;
+          icon.height = 16;
+
+          link.append(icon);
+          icons.append(link);
+        });
+
+        group.append(categoryLabel, icons);
+        bookmarkRows.append(group);
       });
     }
 
