@@ -305,6 +305,14 @@
       }
     ];
 
+    const EXTRA_BOOKMARKS = [
+      {
+        href: 'https://mag.tecture.jp/',
+        icon: 'https://www.google.com/s2/favicons?domain=mag.tecture.jp&sz=32',
+        label: 'TECTURE MAG'
+      }
+    ];
+
     const root = document.documentElement;
     const themeButton = document.getElementById('themeButton');
     const appRows = document.getElementById('appRows');
@@ -370,7 +378,8 @@
 
     function renderBookmarks() {
       bookmarkRows.innerHTML = '';
-      const bookmarks = Array.isArray(window.HHUB_BOOKMARKS) ? window.HHUB_BOOKMARKS : [];
+      const baseBookmarks = Array.isArray(window.HHUB_BOOKMARKS) ? window.HHUB_BOOKMARKS : [];
+      const bookmarks = [...baseBookmarks, ...EXTRA_BOOKMARKS];
 
       bookmarks.forEach(bookmark => {
         const link = document.createElement('a');
