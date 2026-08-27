@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f8f9f9">
   <title>HHUUBB</title>
-  <meta name="description" content="HHHUUUBBB — VAMRSS web application hub.">
+  <meta name="description" content="HHUUBB — VAMRSS web application hub.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <style>
     :root {
@@ -229,7 +229,7 @@
   <main class="app">
     <header class="topbar">
       <button id="themeButton" class="brand-button" type="button" aria-label="Toggle light and dark theme" title="Toggle light / dark theme">HHUUBB</button>
-      <a class="text-link" href="https://github.com/VAMRSS/HHHUUUBBB" target="_blank" rel="noopener noreferrer">GITHUB</a>
+      <a class="text-link" href="https://github.com/VAMRSS/HHUUBB" target="_blank" rel="noopener noreferrer">GITHUB</a>
     </header>
 
     <h2 class="section-title">WEB APPLICATIONS</h2>
@@ -321,14 +321,14 @@
 
     function setTheme(theme) {
       root.dataset.theme = theme;
-      localStorage.setItem('hhhuuubbb-theme', theme);
+      localStorage.setItem('hhuubb-theme', theme);
       document.querySelector('meta[name="theme-color"]').setAttribute(
         'content',
         theme === 'dark' ? '#101312' : '#f8f9f9'
       );
     }
 
-    const savedTheme = localStorage.getItem('hhhuuubbb-theme');
+    const savedTheme = localStorage.getItem('hhuubb-theme');
     const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     setTheme(savedTheme || (systemDark ? 'dark' : 'light'));
 
@@ -378,7 +378,15 @@
 
     function renderBookmarks() {
       bookmarkRows.innerHTML = '';
-      const baseBookmarks = Array.isArray(window.HHUB_BOOKMARKS) ? window.HHUB_BOOKMARKS : [];
+      const baseBookmarks = Array.isArray(window.HHUB_BOOKMARKS)
+        ? window.HHUB_BOOKMARKS.map(bookmark => ({
+            ...bookmark,
+            href: bookmark.href.replace(
+              'https://vamrss.github.io/HHHUUUBBB/',
+              'https://vamrss.github.io/HHUUBB/'
+            )
+          }))
+        : [];
       const bookmarks = [...baseBookmarks, ...EXTRA_BOOKMARKS];
 
       bookmarks.forEach(bookmark => {
