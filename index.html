@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f8f9f9">
   <title>VHUB</title>
   <meta name="description" content="VHUB — VAMRSS web application hub.">
-  <link rel="icon" href="./favicon.svg?v=20260828-2" type="image/svg+xml">
+  <link rel="icon" href="./favicon.svg?v=20260828-3" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap" rel="stylesheet">
@@ -222,8 +222,7 @@
       white-space: nowrap;
     }
 
-    .bookmark-icons,
-    .recommendations {
+    .bookmark-icons {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -269,8 +268,7 @@
       .app-row { gap: .7em; }
       .app-info { gap: .55em; }
       .bookmark-group { grid-template-columns: 84px minmax(0, 1fr); }
-      .bookmark-icons,
-      .recommendations { gap: 9px; }
+      .bookmark-icons { gap: 9px; }
     }
   </style>
 </head>
@@ -289,15 +287,12 @@
     <h2 class="section-title section-spaced">BOOKMARKS</h2>
     <section id="bookmarkRows" class="bookmarks" aria-label="Bookmarks"></section>
 
-    <h2 class="section-title section-spaced">AI RECOMMENDED</h2>
-    <section id="recommendationRows" class="recommendations" aria-label="AI recommended bookmarks"></section>
-
     <footer class="footer">
       <span id="downloadStatus"></span>
     </footer>
   </main>
 
-  <script src="./bookmarks-data.js?v=20260828-2"></script>
+  <script src="./bookmarks-data.js?v=20260828-3"></script>
   <script>
     const APPS = [
       { name: 'MEMOTIMER', description: 'メモ＋タイマー', openUrl: './memotimer.html', htmlUrl: './memotimer.html', fileName: 'memotimer.html' },
@@ -312,18 +307,10 @@
 
     const EXTRA_BOOKMARKS = [
       { href: 'https://mag.tecture.jp/', icon: 'https://www.google.com/s2/favicons?domain=mag.tecture.jp&sz=32', label: 'TECTURE MAG' },
+      { href: 'https://www.notateslaapp.com/', icon: 'https://www.google.com/s2/favicons?domain=notateslaapp.com&sz=32', label: 'Not a Tesla App' },
       { href: 'https://www.google.com/maps', icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32', label: 'Google Maps' },
       { href: 'https://outlook.cloud.microsoft/mail/', icon: './outlook-mail.svg', label: 'Outlook Mail' },
       { href: 'https://outlook.cloud.microsoft/calendar/', icon: './outlook-calendar.svg', label: 'Outlook Calendar' }
-    ];
-
-    const AI_RECOMMENDED = [
-      { href: 'https://notebooklm.google.com/', icon: 'https://www.google.com/s2/favicons?domain=notebooklm.google.com&sz=32', label: 'Gemini Notebook' },
-      { href: 'https://aistudio.google.com/', icon: 'https://www.google.com/s2/favicons?domain=aistudio.google.com&sz=32', label: 'Google AI Studio' },
-      { href: 'https://huggingface.co/', icon: 'https://www.google.com/s2/favicons?domain=huggingface.co&sz=32', label: 'Hugging Face' },
-      { href: 'https://www.notateslaapp.com/', icon: 'https://www.google.com/s2/favicons?domain=notateslaapp.com&sz=32', label: 'Not a Tesla App' },
-      { href: 'https://www.archdaily.com/', icon: 'https://www.google.com/s2/favicons?domain=archdaily.com&sz=32', label: 'ArchDaily' },
-      { href: 'https://github.com/trending', icon: 'https://github.com/favicon.ico', label: 'GitHub Trending' }
     ];
 
     const BOOKMARK_CATEGORY_ORDER = [
@@ -340,7 +327,6 @@
     const themeButton = document.getElementById('themeButton');
     const appRows = document.getElementById('appRows');
     const bookmarkRows = document.getElementById('bookmarkRows');
-    const recommendationRows = document.getElementById('recommendationRows');
     const downloadStatus = document.getElementById('downloadStatus');
 
     function setTheme(theme) {
@@ -433,7 +419,10 @@
         href.includes('keep.google.com')
       ) return 'TOOLS';
 
-      if (href.includes('mag.tecture.jp')) return 'MEDIA';
+      if (
+        href.includes('mag.tecture.jp') ||
+        href.includes('notateslaapp.com')
+      ) return 'MEDIA';
 
       if (
         href.includes('partner.sapporobeer.jp') ||
@@ -455,7 +444,7 @@
       const icon = document.createElement('img');
       icon.className = 'bookmark-icon';
       icon.src = bookmark.icon === './favicon.svg'
-        ? './favicon.svg?v=20260828-2'
+        ? './favicon.svg?v=20260828-3'
         : bookmark.icon;
       icon.alt = '';
       icon.width = 16;
@@ -498,13 +487,6 @@
       });
     }
 
-    function renderRecommendations() {
-      recommendationRows.innerHTML = '';
-      AI_RECOMMENDED.forEach(bookmark => {
-        recommendationRows.append(createBookmarkLink(bookmark, 'AI RECOMMENDED'));
-      });
-    }
-
     async function downloadHtml(app) {
       downloadStatus.textContent = 'DOWNLOADING…';
       try {
@@ -532,7 +514,6 @@
 
     renderApps();
     renderBookmarks();
-    renderRecommendations();
   </script>
 </body>
 </html>
