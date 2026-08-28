@@ -307,7 +307,6 @@
 
     const EXTRA_BOOKMARKS = [
       { href: 'https://mag.tecture.jp/', icon: 'https://www.google.com/s2/favicons?domain=mag.tecture.jp&sz=32', label: 'TECTURE MAG' },
-      { href: 'https://www.notateslaapp.com/', icon: 'https://www.google.com/s2/favicons?domain=notateslaapp.com&sz=32', label: 'Not a Tesla App' },
       { href: 'https://www.google.com/maps', icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32', label: 'Google Maps' },
       { href: 'https://outlook.cloud.microsoft/mail/', icon: './outlook-mail.svg', label: 'Outlook Mail' },
       { href: 'https://outlook.cloud.microsoft/calendar/', icon: './outlook-calendar.svg', label: 'Outlook Calendar' }
@@ -419,10 +418,7 @@
         href.includes('keep.google.com')
       ) return 'TOOLS';
 
-      if (
-        href.includes('mag.tecture.jp') ||
-        href.includes('notateslaapp.com')
-      ) return 'MEDIA';
+      if (href.includes('mag.tecture.jp')) return 'MEDIA';
 
       if (
         href.includes('partner.sapporobeer.jp') ||
