@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f8f9f9">
   <title>VHUB</title>
   <meta name="description" content="VHUB — VAMRSS web application hub.">
-  <link rel="icon" href="./favicon.svg?v=20260828-1" type="image/svg+xml">
+  <link rel="icon" href="./favicon.svg?v=20260828-2" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap" rel="stylesheet">
@@ -142,6 +142,10 @@
       text-transform: uppercase;
     }
 
+    .section-spaced {
+      margin-top: 32px;
+    }
+
     .list {
       display: grid;
       gap: 0;
@@ -183,9 +187,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
       color: var(--muted);
-      font-size: 12px;
-      font-weight: 300;
-      letter-spacing: 0;
     }
 
     .actions {
@@ -199,10 +200,6 @@
     .action {
       line-height: 2;
       text-transform: uppercase;
-    }
-
-    .bookmark-title {
-      margin-top: 32px;
     }
 
     .bookmarks {
@@ -220,19 +217,19 @@
 
     .bookmark-category {
       color: var(--muted);
-      font-size: 12px;
-      font-weight: 300;
       line-height: 1;
       letter-spacing: 0.09em;
       white-space: nowrap;
     }
 
-    .bookmark-icons {
+    .bookmark-icons,
+    .recommendations {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 10px;
       min-width: 0;
+      padding: 3px 0;
     }
 
     .bookmark-link {
@@ -272,7 +269,8 @@
       .app-row { gap: .7em; }
       .app-info { gap: .55em; }
       .bookmark-group { grid-template-columns: 84px minmax(0, 1fr); }
-      .bookmark-icons { gap: 9px; }
+      .bookmark-icons,
+      .recommendations { gap: 9px; }
     }
   </style>
 </head>
@@ -288,96 +286,44 @@
     <h2 class="section-title">WEB APPLICATIONS</h2>
     <section id="appRows" class="list" aria-label="Web applications"></section>
 
-    <h2 class="section-title bookmark-title">BOOKMARKS</h2>
+    <h2 class="section-title section-spaced">BOOKMARKS</h2>
     <section id="bookmarkRows" class="bookmarks" aria-label="Bookmarks"></section>
+
+    <h2 class="section-title section-spaced">AI RECOMMENDED</h2>
+    <section id="recommendationRows" class="recommendations" aria-label="AI recommended bookmarks"></section>
 
     <footer class="footer">
       <span id="downloadStatus"></span>
     </footer>
   </main>
 
-  <script src="./bookmarks-data.js?v=20260828-1"></script>
+  <script src="./bookmarks-data.js?v=20260828-2"></script>
   <script>
     const APPS = [
-      {
-        name: 'MEMOTIMER',
-        description: 'メモ＋タイマー',
-        openUrl: './memotimer.html',
-        htmlUrl: './memotimer.html',
-        fileName: 'memotimer.html'
-      },
-      {
-        name: 'MICRO BUSINESS BOARD',
-        description: '小規模事業の進捗・収支管理',
-        openUrl: './micro-business-board-v0.1.html',
-        htmlUrl: './micro-business-board-v0.1.html',
-        fileName: 'micro-business-board-v0.1.html'
-      },
-      {
-        name: 'YT PLAIN',
-        description: 'YouTube検索',
-        openUrl: './yt-plain-wsv-v1.2.1.html',
-        htmlUrl: './yt-plain-wsv-v1.2.1.html',
-        fileName: 'yt-plain-wsv-v1.2.1.html'
-      },
-      {
-        name: 'PDF2JPEG',
-        description: 'PDF一括変換',
-        openUrl: './pdf-to-jpeg-batch-v7-text-flat.html',
-        htmlUrl: './pdf-to-jpeg-batch-v7-text-flat.html',
-        fileName: 'pdf-to-jpeg-batch-v7-text-flat.html'
-      },
-      {
-        name: 'WIKIPEDIA PLAIN VIEWER',
-        description: 'Wikipedia閲覧',
-        openUrl: './wikipedia-plain-viewer.html',
-        htmlUrl: './wikipedia-plain-viewer.html',
-        fileName: 'wikipedia-plain-viewer.html'
-      },
-      {
-        name: 'MP4 SEAMLESS JOINER',
-        description: 'MP4無再エンコード結合',
-        openUrl: './mp4-seamless-joiner-v2.html',
-        htmlUrl: './mp4-seamless-joiner-v2.html',
-        fileName: 'mp4-seamless-joiner-v2.html'
-      },
-      {
-        name: 'IMAGE BATCH EDITOR',
-        description: '画像一括編集',
-        openUrl: './vamrss_image_batch_editor_web.html',
-        htmlUrl: './vamrss_image_batch_editor_web.html',
-        fileName: 'vamrss_image_batch_editor_web.html'
-      },
-      {
-        name: 'IMAGE REDACTION UTILITY',
-        description: '画像一括黒塗り',
-        openUrl: './vamrss_image_redaction_utility_web.html',
-        htmlUrl: './vamrss_image_redaction_utility_web.html',
-        fileName: 'vamrss_image_redaction_utility_web.html'
-      }
+      { name: 'MEMOTIMER', description: 'メモ＋タイマー', openUrl: './memotimer.html', htmlUrl: './memotimer.html', fileName: 'memotimer.html' },
+      { name: 'MICRO BUSINESS BOARD', description: '小規模事業の進捗・収支管理', openUrl: './micro-business-board-v0.1.html', htmlUrl: './micro-business-board-v0.1.html', fileName: 'micro-business-board-v0.1.html' },
+      { name: 'YT PLAIN', description: 'YouTube検索', openUrl: './yt-plain-wsv-v1.2.1.html', htmlUrl: './yt-plain-wsv-v1.2.1.html', fileName: 'yt-plain-wsv-v1.2.1.html' },
+      { name: 'PDF2JPEG', description: 'PDF一括変換', openUrl: './pdf-to-jpeg-batch-v7-text-flat.html', htmlUrl: './pdf-to-jpeg-batch-v7-text-flat.html', fileName: 'pdf-to-jpeg-batch-v7-text-flat.html' },
+      { name: 'WIKIPEDIA PLAIN VIEWER', description: 'Wikipedia閲覧', openUrl: './wikipedia-plain-viewer.html', htmlUrl: './wikipedia-plain-viewer.html', fileName: 'wikipedia-plain-viewer.html' },
+      { name: 'MP4 SEAMLESS JOINER', description: 'MP4無再エンコード結合', openUrl: './mp4-seamless-joiner-v2.html', htmlUrl: './mp4-seamless-joiner-v2.html', fileName: 'mp4-seamless-joiner-v2.html' },
+      { name: 'IMAGE BATCH EDITOR', description: '画像一括編集', openUrl: './vamrss_image_batch_editor_web.html', htmlUrl: './vamrss_image_batch_editor_web.html', fileName: 'vamrss_image_batch_editor_web.html' },
+      { name: 'IMAGE REDACTION UTILITY', description: '画像一括黒塗り', openUrl: './vamrss_image_redaction_utility_web.html', htmlUrl: './vamrss_image_redaction_utility_web.html', fileName: 'vamrss_image_redaction_utility_web.html' }
     ];
 
     const EXTRA_BOOKMARKS = [
-      {
-        href: 'https://mag.tecture.jp/',
-        icon: 'https://www.google.com/s2/favicons?domain=mag.tecture.jp&sz=32',
-        label: 'TECTURE MAG'
-      },
-      {
-        href: 'https://www.google.com/maps',
-        icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32',
-        label: 'Google Maps'
-      },
-      {
-        href: 'https://outlook.cloud.microsoft/mail/',
-        icon: './outlook-mail.svg',
-        label: 'Outlook Mail'
-      },
-      {
-        href: 'https://outlook.cloud.microsoft/calendar/',
-        icon: './outlook-calendar.svg',
-        label: 'Outlook Calendar'
-      }
+      { href: 'https://mag.tecture.jp/', icon: 'https://www.google.com/s2/favicons?domain=mag.tecture.jp&sz=32', label: 'TECTURE MAG' },
+      { href: 'https://www.google.com/maps', icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32', label: 'Google Maps' },
+      { href: 'https://outlook.cloud.microsoft/mail/', icon: './outlook-mail.svg', label: 'Outlook Mail' },
+      { href: 'https://outlook.cloud.microsoft/calendar/', icon: './outlook-calendar.svg', label: 'Outlook Calendar' }
+    ];
+
+    const AI_RECOMMENDED = [
+      { href: 'https://notebooklm.google.com/', icon: 'https://www.google.com/s2/favicons?domain=notebooklm.google.com&sz=32', label: 'Gemini Notebook' },
+      { href: 'https://aistudio.google.com/', icon: 'https://www.google.com/s2/favicons?domain=aistudio.google.com&sz=32', label: 'Google AI Studio' },
+      { href: 'https://huggingface.co/', icon: 'https://www.google.com/s2/favicons?domain=huggingface.co&sz=32', label: 'Hugging Face' },
+      { href: 'https://www.notateslaapp.com/', icon: 'https://www.google.com/s2/favicons?domain=notateslaapp.com&sz=32', label: 'Not a Tesla App' },
+      { href: 'https://www.archdaily.com/', icon: 'https://www.google.com/s2/favicons?domain=archdaily.com&sz=32', label: 'ArchDaily' },
+      { href: 'https://github.com/trending', icon: 'https://github.com/favicon.ico', label: 'GitHub Trending' }
     ];
 
     const BOOKMARK_CATEGORY_ORDER = [
@@ -394,6 +340,7 @@
     const themeButton = document.getElementById('themeButton');
     const appRows = document.getElementById('appRows');
     const bookmarkRows = document.getElementById('bookmarkRows');
+    const recommendationRows = document.getElementById('recommendationRows');
     const downloadStatus = document.getElementById('downloadStatus');
 
     function setTheme(theme) {
@@ -496,18 +443,33 @@
       return 'OTHER';
     }
 
+    function createBookmarkLink(bookmark, suffix = '') {
+      const link = document.createElement('a');
+      link.className = 'bookmark-link';
+      link.href = bookmark.href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.title = suffix ? `${bookmark.label} · ${suffix}` : bookmark.label;
+      link.setAttribute('aria-label', suffix ? `${bookmark.label}, ${suffix}` : bookmark.label);
+
+      const icon = document.createElement('img');
+      icon.className = 'bookmark-icon';
+      icon.src = bookmark.icon === './favicon.svg'
+        ? './favicon.svg?v=20260828-2'
+        : bookmark.icon;
+      icon.alt = '';
+      icon.width = 16;
+      icon.height = 16;
+
+      link.append(icon);
+      return link;
+    }
+
     function renderBookmarks() {
       bookmarkRows.innerHTML = '';
 
       const baseBookmarks = Array.isArray(window.HHUB_BOOKMARKS)
         ? window.HHUB_BOOKMARKS
-            .filter(bookmark => !bookmark.href.toLowerCase().includes('mazelingo-web.pages.dev'))
-            .map(bookmark => ({
-              ...bookmark,
-              href: bookmark.href
-                .replace('https://vamrss.github.io/HHHUUUBBB/', 'https://vamrss.github.io/VHUB/')
-                .replace('https://vamrss.github.io/HHUUBB/', 'https://vamrss.github.io/VHUB/')
-            }))
         : [];
 
       const bookmarks = [...baseBookmarks, ...EXTRA_BOOKMARKS].map(bookmark => ({
@@ -529,30 +491,17 @@
         const icons = document.createElement('span');
         icons.className = 'bookmark-icons';
 
-        items.forEach(bookmark => {
-          const link = document.createElement('a');
-          link.className = 'bookmark-link';
-          link.href = bookmark.href;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.title = `${bookmark.label} · ${bookmark.category}`;
-          link.setAttribute('aria-label', `${bookmark.label}, ${bookmark.category}`);
-
-          const icon = document.createElement('img');
-          icon.className = 'bookmark-icon';
-          icon.src = bookmark.icon === './favicon.svg'
-            ? './favicon.svg?v=20260828-1'
-            : bookmark.icon;
-          icon.alt = '';
-          icon.width = 16;
-          icon.height = 16;
-
-          link.append(icon);
-          icons.append(link);
-        });
+        items.forEach(bookmark => icons.append(createBookmarkLink(bookmark, category)));
 
         group.append(categoryLabel, icons);
         bookmarkRows.append(group);
+      });
+    }
+
+    function renderRecommendations() {
+      recommendationRows.innerHTML = '';
+      AI_RECOMMENDED.forEach(bookmark => {
+        recommendationRows.append(createBookmarkLink(bookmark, 'AI RECOMMENDED'));
       });
     }
 
@@ -583,6 +532,7 @@
 
     renderApps();
     renderBookmarks();
+    renderRecommendations();
   </script>
 </body>
 </html>
