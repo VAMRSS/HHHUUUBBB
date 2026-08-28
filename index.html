@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f8f9f9">
   <title>VHUB</title>
   <meta name="description" content="VHUB — VAMRSS web application hub.">
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="./favicon.svg?v=20260828-1" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap" rel="stylesheet">
@@ -296,7 +296,7 @@
     </footer>
   </main>
 
-  <script src="./bookmarks-data.js"></script>
+  <script src="./bookmarks-data.js?v=20260828-1"></script>
   <script>
     const APPS = [
       {
@@ -540,7 +540,9 @@
 
           const icon = document.createElement('img');
           icon.className = 'bookmark-icon';
-          icon.src = bookmark.icon;
+          icon.src = bookmark.icon === './favicon.svg'
+            ? './favicon.svg?v=20260828-1'
+            : bookmark.icon;
           icon.alt = '';
           icon.width = 16;
           icon.height = 16;
