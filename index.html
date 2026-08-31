@@ -255,6 +255,17 @@
       object-fit: contain;
     }
 
+    .bookmark-link.fluent-icon-frame {
+      background: #fff;
+      border-radius: 50%;
+      opacity: 1;
+    }
+
+    .bookmark-link.fluent-icon-frame .bookmark-icon {
+      width: 11px;
+      height: 11px;
+    }
+
     .footer {
       display: flex;
       justify-content: flex-end;
@@ -311,8 +322,8 @@
       { href: 'https://typhoon.yahoo.co.jp/weather/jp/earthquake/kyoshin/', icon: 'https://www.google.com/s2/favicons?domain=typhoon.yahoo.co.jp&sz=32', label: 'Yahoo! 強震モニタ' },
       { href: 'https://weathernews.jp/onebox/tenki/tokyo/13120/', icon: 'https://www.google.com/s2/favicons?domain=weathernews.jp&sz=32', label: 'Weathernews' },
       { href: 'https://www.google.com/maps', icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32', label: 'Google Maps' },
-      { href: 'https://outlook.cloud.microsoft/mail/', icon: './outlook-mail.svg', label: 'Outlook Mail' },
-      { href: 'https://outlook.cloud.microsoft/calendar/', icon: './outlook-calendar.svg', label: 'Outlook Calendar' }
+      { href: 'https://outlook.cloud.microsoft/mail/', icon: './outlook-mail.svg?v=20260901-1', label: 'Outlook Mail', iconStyle: 'fluent' },
+      { href: 'https://outlook.cloud.microsoft/calendar/', icon: './outlook-calendar.svg?v=20260901-1', label: 'Outlook Calendar', iconStyle: 'fluent' }
     ];
 
     const BOOKMARK_CATEGORY_ORDER = [
@@ -441,6 +452,7 @@
     function createBookmarkLink(bookmark, suffix = '') {
       const link = document.createElement('a');
       link.className = 'bookmark-link';
+      if (bookmark.iconStyle === 'fluent') link.classList.add('fluent-icon-frame');
       link.href = bookmark.href;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
