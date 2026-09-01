@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f8f9f9">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="A minimal memo and hidden countdown timer by VAMRSS.">
+  <meta name="description" content="A minimal memo and countdown timer by VAMRSS.">
   <title>MEMOTIME — VAMRSS</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="mask-icon" href="favicon.svg" color="#111714">
@@ -14,7 +14,7 @@
     /*
       VAMRSS MEMOTIME
       VAMRSS Interface Language v1.3 implementation
-      v1.2.0 — interface-language alignment
+      v1.2.1 — subtle remaining-time display
     */
 
     :root {
@@ -331,6 +331,16 @@
       text-transform: uppercase;
     }
 
+    .remaining-time {
+      display: block;
+      color: var(--muted);
+      font-size: var(--fz-note);
+      font-weight: var(--weight);
+      line-height: var(--lh-note);
+      letter-spacing: var(--letter-nav);
+      font-variant-numeric: tabular-nums;
+    }
+
     .time-up {
       margin: 0;
       color: var(--ink);
@@ -443,7 +453,7 @@
 </head>
 <body>
   <div class="fixed-meta copyright">(C) 2026 SHIRASUSALAD</div>
-  <div class="fixed-meta version">v1.2.0</div>
+  <div class="fixed-meta version">v1.2.1</div>
 
   <main class="app">
     <header class="topbar">
@@ -494,7 +504,7 @@
       </div>
 
       <div id="runningState" class="running-state" aria-live="polite">
-        <p class="state-copy"><span class="state-label">Running</span>Remaining time hidden.</p>
+        <p class="state-copy"><span class="state-label">Running</span><span id="remainingTime" class="remaining-time">00:00</span></p>
         <button id="stopButton" class="text-button bracket" type="button">STOP</button>
       </div>
 
@@ -540,6 +550,7 @@
       const timerControls = document.getElementById('timerControls');
       const runningState = document.getElementById('runningState');
       const doneState = document.getElementById('doneState');
+      const remainingTime = document.getElementById('remainingTime');
       const startButton = document.getElementById('startButton');
       const stopButton = document.getElementById('stopButton');
       const resetButton = document.getElementById('resetButton');
@@ -667,6 +678,7 @@
         timerControls.style.display = 'none';
         doneState.classList.remove('active');
         runningState.classList.add('active');
+        updateRemainingTime();
 
         clearInterval(timerId);
         timerId = setInterval(checkTimer, 250);
@@ -680,6 +692,7 @@
         clearInterval(timerId);
         timerId = null;
         endAt = null;
+        remainingTime.textContent = '00:00';
         runningState.classList.remove('active');
         doneState.classList.remove('active');
         timerControls.style.display = '';
@@ -687,7 +700,11 @@
       }
 
       function checkTimer() {
-        if (endAt === null || Date.now() < endAt) return;
+        if (endAt === null) return;
+
+        const remainingMs = Math.max(0, endAt - Date.now());
+        updateRemainingTime(remainingMs);
+        if (remainingMs > 0) return;
 
         clearInterval(timerId);
         timerId = null;
@@ -698,6 +715,19 @@
 
         if ('vibrate' in navigator) {
           navigator.vibrate([180, 80, 180]);
+        }
+      }
+
+      function updateRemainingTime(remainingMs = Math.max(0, (endAt ?? Date.now()) - Date.now())) {
+        const totalSeconds = Math.ceil(remainingMs / 1000);
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+
+        if (h > 0) {
+          remainingTime.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        } else {
+          remainingTime.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         }
       }
 
