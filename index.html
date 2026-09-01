@@ -322,6 +322,7 @@
       { href: 'https://typhoon.yahoo.co.jp/weather/jp/earthquake/kyoshin/', icon: './fluent-earthquake.svg?v=20260901-1', label: 'Yahoo! 強震モニタ', iconStyle: 'fluent' },
       { href: 'https://weathernews.jp/onebox/tenki/tokyo/13120/', icon: 'https://www.google.com/s2/favicons?domain=weathernews.jp&sz=32', label: 'Weathernews' },
       { href: 'https://www.google.com/maps', icon: 'https://www.google.com/s2/favicons?domain=maps.google.com&sz=32', label: 'Google Maps' },
+      { href: 'https://platform.openai.com/home', icon: 'https://www.google.com/s2/favicons?domain=platform.openai.com&sz=32', label: 'OpenAI Platform' },
       { href: 'https://outlook.cloud.microsoft/mail/', icon: './outlook-mail.svg?v=20260901-1', label: 'Outlook Mail', iconStyle: 'fluent' },
       { href: 'https://outlook.cloud.microsoft/calendar/', icon: './outlook-calendar.svg?v=20260901-1', label: 'Outlook Calendar', iconStyle: 'fluent' }
     ];
@@ -417,6 +418,7 @@
         href.includes('claude.ai') ||
         href.includes('gemini.google.com') ||
         href.includes('chatgpt.com') ||
+        href.includes('platform.openai.com') ||
         href.includes('d3ul3fhsq70saq.cloudfront.net')
       ) return 'AI';
 
