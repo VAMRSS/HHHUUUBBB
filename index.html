@@ -76,7 +76,7 @@
       border: 0;
       background: transparent;
       margin: 0;
-      padding: 0 2px;
+      padding: 0;
       color: var(--sub);
       font-size: 12px;
       font-weight: 300;
@@ -88,7 +88,6 @@
 
     .brand-button {
       justify-self: start;
-      padding-left: 0;
       color: var(--ink);
       font-family: "Rubik Glitch", sans-serif;
       font-size: 40px;
@@ -97,25 +96,12 @@
       letter-spacing: 0;
     }
 
-    .text-link {
-      justify-self: end;
-      display: inline-flex;
-      width: 16px;
-      height: 16px;
-      padding: 0;
+    .nav-links {
+      display: flex;
       align-items: center;
-      justify-content: center;
-      opacity: .68;
-    }
-
-    .github-icon {
-      display: block;
-      width: 16px;
-      height: 16px;
-    }
-
-    html[data-theme="dark"] .github-icon {
-      filter: invert(1);
+      justify-content: flex-end;
+      gap: 14px;
+      padding-top: 2px;
     }
 
     .brand-button:hover,
@@ -128,11 +114,6 @@
       outline: none;
     }
 
-    .text-link:hover,
-    .text-link:focus-visible {
-      opacity: 1;
-    }
-
     .section-title {
       margin: 16px 0 5px;
       color: var(--muted);
@@ -142,14 +123,8 @@
       text-transform: uppercase;
     }
 
-    .section-spaced {
-      margin-top: 32px;
-    }
-
-    .list {
-      display: grid;
-      gap: 0;
-    }
+    .section-spaced { margin-top: 32px; }
+    .list { display: grid; gap: 0; }
 
     .app-row {
       width: 100%;
@@ -276,6 +251,7 @@
 
     @media (max-width: 420px) {
       .topbar { column-gap: 12px; }
+      .nav-links { gap: 10px; }
       .app-row { gap: .7em; }
       .app-info { gap: .55em; }
       .bookmark-group { grid-template-columns: 84px minmax(0, 1fr); }
@@ -287,9 +263,10 @@
   <main class="app">
     <header class="topbar">
       <button id="themeButton" class="brand-button" type="button" aria-label="Toggle light and dark theme" title="Toggle light / dark theme">VHUB</button>
-      <a class="text-link" href="https://github.com/VAMRSS/VHUB" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub">
-        <img class="github-icon" src="https://github.com/favicon.ico" alt="">
-      </a>
+      <nav class="nav-links" aria-label="VHUB navigation">
+        <a class="text-link" href="https://github.com/VAMRSS/VHUB" target="_blank" rel="noopener noreferrer">GITHUB</a>
+        <a class="text-link" href="./settings.html">SETTINGS</a>
+      </nav>
     </header>
 
     <h2 class="section-title">WEB APPLICATIONS</h2>
@@ -328,14 +305,7 @@
     ];
 
     const BOOKMARK_CATEGORY_ORDER = [
-      'WORK',
-      'AI',
-      'TRANSIT',
-      'WEATHER',
-      'TOOLS',
-      'MEDIA',
-      'LIFESTYLE',
-      'OTHER'
+      'WORK', 'AI', 'TRANSIT', 'WEATHER', 'TOOLS', 'MEDIA', 'LIFESTYLE', 'OTHER'
     ];
 
     const root = document.documentElement;
@@ -378,7 +348,6 @@
       const description = document.createElement('span');
       description.className = 'app-description';
       description.textContent = app.description;
-
       info.append(name, description);
 
       const actions = document.createElement('span');
@@ -387,7 +356,7 @@
       const download = document.createElement('button');
       download.className = 'action';
       download.type = 'button';
-      download.textContent = 'HTML';
+      download.textContent = 'DOWNLOAD';
       download.setAttribute('aria-label', `Download ${app.name} HTML`);
       download.addEventListener('click', () => downloadHtml(app));
 
@@ -499,7 +468,6 @@
 
         const icons = document.createElement('span');
         icons.className = 'bookmark-icons';
-
         items.forEach(bookmark => icons.append(createBookmarkLink(bookmark, category)));
 
         group.append(categoryLabel, icons);
