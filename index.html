@@ -258,11 +258,12 @@
       .bookmark-icons { gap: 9px; }
     }
   </style>
+  <script src="./vhub-theme.js?v=20260903-1"></script>
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <button id="themeButton" class="brand-button" type="button" aria-label="Toggle light and dark theme" title="Toggle light / dark theme">VHUB</button>
+      <button id="themeButton" class="brand-button" type="button" aria-label="Quick toggle light and dark theme" title="Quick toggle light / dark">VHUB</button>
       <nav class="nav-links" aria-label="VHUB navigation">
         <a class="text-link" href="https://github.com/VAMRSS/VHUB" target="_blank" rel="noopener noreferrer">GITHUB</a>
         <a class="text-link" href="./settings.html">SETTINGS</a>
@@ -315,20 +316,12 @@
     const downloadStatus = document.getElementById('downloadStatus');
 
     function setTheme(theme) {
-      root.dataset.theme = theme;
-      localStorage.setItem('vhub-theme', theme);
-      document.querySelector('meta[name="theme-color"]').setAttribute(
-        'content',
-        theme === 'dark' ? '#101312' : '#f8f9f9'
-      );
+      window.VHUBTheme.apply(theme);
     }
 
-    const savedTheme = localStorage.getItem('vhub-theme');
-    const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(savedTheme || (systemDark ? 'dark' : 'light'));
-
     themeButton.addEventListener('click', () => {
-      setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+      const current = window.VHUBTheme.get(root.dataset.theme);
+      setTheme(current && current.dark ? 'light' : 'dark');
     });
 
     function createRow(app) {
