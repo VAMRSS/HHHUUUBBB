@@ -87,7 +87,7 @@
     }
 
     .text-link,
-    .choice {
+    .theme-choice {
       appearance: none;
       border: 0;
       background: transparent;
@@ -96,16 +96,19 @@
       color: var(--sub);
       font-size: 12px;
       font-weight: 300;
-      line-height: 1;
-      letter-spacing: 0.09em;
       text-decoration: none;
       cursor: pointer;
     }
 
+    .text-link {
+      line-height: 1;
+      letter-spacing: 0.09em;
+    }
+
     .text-link:hover,
     .text-link:focus-visible,
-    .choice:hover,
-    .choice:focus-visible {
+    .theme-choice:hover,
+    .theme-choice:focus-visible {
       color: var(--ink);
       outline: none;
     }
@@ -122,7 +125,7 @@
     .setting-row {
       display: grid;
       grid-template-columns: 92px minmax(0, 1fr);
-      align-items: baseline;
+      align-items: start;
       min-height: 28px;
       padding: 2px 0;
     }
@@ -130,16 +133,67 @@
     .setting-label {
       color: var(--muted);
       letter-spacing: 0.09em;
+      line-height: 24px;
     }
 
-    .setting-control {
-      display: flex;
-      align-items: baseline;
-      gap: 14px;
+    .theme-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 3px 16px;
       min-width: 0;
     }
 
-    .choice[aria-pressed="true"] {
+    .theme-choice {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      text-align: left;
+      line-height: 24px;
+      letter-spacing: 0.06em;
+    }
+
+    .theme-swatch {
+      position: relative;
+      display: block;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      background: var(--swatch-bg);
+      box-shadow: inset 0 0 0 1px rgba(127, 127, 127, .3);
+      overflow: hidden;
+    }
+
+    .theme-swatch::before,
+    .theme-swatch::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      border-radius: 1px;
+    }
+
+    .theme-swatch::before {
+      top: 5px;
+      width: 8px;
+      height: 2px;
+      background: var(--swatch-ink);
+    }
+
+    .theme-swatch::after {
+      top: 9px;
+      width: 6px;
+      height: 1px;
+      background: var(--swatch-sub);
+    }
+
+    .theme-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .theme-choice[aria-pressed="true"] .theme-name {
       color: var(--ink);
       text-decoration: underline;
       text-underline-offset: 3px;
@@ -155,9 +209,11 @@
       .topbar { column-gap: 12px; }
       .nav-links { gap: 10px; }
       .setting-row { grid-template-columns: 84px minmax(0, 1fr); }
+      .theme-options { grid-template-columns: 1fr; gap: 2px; }
       .note { margin-left: 84px; }
     }
   </style>
+  <script src="./vhub-theme.js?v=20260903-1"></script>
 </head>
 <body>
   <main class="app">
@@ -174,38 +230,52 @@
     <section aria-label="Appearance settings">
       <div class="setting-row">
         <span class="setting-label">THEME</span>
-        <span class="setting-control">
-          <button id="lightButton" class="choice" type="button" aria-pressed="false">LIGHT</button>
-          <button id="darkButton" class="choice" type="button" aria-pressed="false">DARK</button>
-        </span>
+        <div id="themeOptions" class="theme-options"></div>
       </div>
     </section>
 
-    <p class="note">VHUBの設定項目は今後このページに集約します。</p>
+    <p class="note">18 THEMES · 選択したテーマはこのブラウザに保存され、HOMEにも反映されます。</p>
   </main>
 
   <script>
-    const root = document.documentElement;
-    const lightButton = document.getElementById('lightButton');
-    const darkButton = document.getElementById('darkButton');
+    const themeOptions = document.getElementById('themeOptions');
 
-    function setTheme(theme) {
-      root.dataset.theme = theme;
-      localStorage.setItem('vhub-theme', theme);
-      document.querySelector('meta[name="theme-color"]').setAttribute(
-        'content',
-        theme === 'dark' ? '#101312' : '#f8f9f9'
-      );
-      lightButton.setAttribute('aria-pressed', String(theme === 'light'));
-      darkButton.setAttribute('aria-pressed', String(theme === 'dark'));
+    function syncSelection(themeId) {
+      themeOptions.querySelectorAll('.theme-choice').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.theme === themeId));
+      });
     }
 
-    const savedTheme = localStorage.getItem('vhub-theme');
-    const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : (systemDark ? 'dark' : 'light'));
+    function setTheme(themeId) {
+      const theme = window.VHUBTheme.apply(themeId);
+      syncSelection(theme.id);
+    }
 
-    lightButton.addEventListener('click', () => setTheme('light'));
-    darkButton.addEventListener('click', () => setTheme('dark'));
+    window.VHUBTheme.themes.forEach(theme => {
+      const button = document.createElement('button');
+      button.className = 'theme-choice';
+      button.type = 'button';
+      button.dataset.theme = theme.id;
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-label', `${theme.label} theme`);
+      button.style.setProperty('--swatch-bg', theme.bg);
+      button.style.setProperty('--swatch-ink', theme.ink);
+      button.style.setProperty('--swatch-sub', theme.sub);
+
+      const swatch = document.createElement('span');
+      swatch.className = 'theme-swatch';
+      swatch.setAttribute('aria-hidden', 'true');
+
+      const label = document.createElement('span');
+      label.className = 'theme-name';
+      label.textContent = theme.label;
+
+      button.append(swatch, label);
+      button.addEventListener('click', () => setTheme(theme.id));
+      themeOptions.append(button);
+    });
+
+    syncSelection(document.documentElement.dataset.theme);
   </script>
 </body>
 </html>
